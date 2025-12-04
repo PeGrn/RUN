@@ -30,83 +30,85 @@ export function StepRow({ step, vma, onChange, onDelete, onDuplicate, isInBlock 
   return (
     <>
       {/* Distance */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
+        <div className="flex items-center gap-1">
           <Input
             type="number"
             value={step.distance}
             onChange={(e) => handleChange('distance', parseInt(e.target.value) || 0)}
-            className="w-24 h-9"
+            className="w-16 sm:w-20 md:w-24 h-8 text-xs sm:text-sm"
             min="0"
             step="50"
           />
-          <span className="text-sm text-muted-foreground">m</span>
+          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">m</span>
         </div>
       </td>
 
       {/* VMA % */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
+        <div className="flex items-center gap-1">
           <Input
             type="number"
             value={step.vmaPercentage}
             onChange={(e) => handleChange('vmaPercentage', parseInt(e.target.value) || 0)}
-            className="w-20 h-9"
+            className="w-14 sm:w-16 md:w-20 h-8 text-xs sm:text-sm"
             min="0"
             max="200"
             step="5"
           />
-          <span className="text-sm text-muted-foreground">%</span>
+          <span className="text-xs sm:text-sm text-muted-foreground">%</span>
         </div>
       </td>
 
       {/* Speed (calculated) */}
-      <td className="px-4 py-3">
-        <span className="text-sm font-medium">
-          {speed.toFixed(2)} km/h
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
+        <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+          {speed.toFixed(1)}
+          <span className="hidden sm:inline"> km/h</span>
+          <span className="sm:hidden text-xs text-muted-foreground ml-0.5">km/h</span>
         </span>
       </td>
 
       {/* Target Time (calculated) */}
-      <td className="px-4 py-3">
-        <span className="text-sm font-mono font-medium text-primary">
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
+        <span className="text-xs sm:text-sm font-mono font-medium text-primary whitespace-nowrap">
           {formatTime(targetTime)}
         </span>
       </td>
 
       {/* Rest */}
-      <td className="px-4 py-3">
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
         <Input
           type="text"
           value={step.rest}
           onChange={(e) => handleChange('rest', e.target.value)}
-          placeholder="0&quot;, 2', etc."
-          className="w-24 h-9 font-mono"
+          placeholder="0&quot;"
+          className="w-14 sm:w-20 md:w-24 h-8 font-mono text-xs sm:text-sm"
         />
       </td>
 
       {/* Actions */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-1">
+      <td className="px-2 sm:px-3 py-2 sm:py-3">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {onDuplicate && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onDuplicate}
-              className="h-8 w-8 p-0 hover:bg-primary/10"
+              className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-primary/10"
               title="Dupliquer"
             >
-              <Copy className="h-4 w-4" />
+              <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
             title="Supprimer"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
         </div>
       </td>

@@ -148,42 +148,48 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Construction de l&apos;entraînement
+      <CardHeader className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <FileText className="h-5 w-5 flex-shrink-0" />
+              <span className="truncate">Construction de l&apos;entraînement</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1.5">
               Créez votre programme étape par étape
             </CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={addStep} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un step
+          <div className="flex gap-2 flex-shrink-0">
+            <Button onClick={addStep} variant="outline" size="sm" className="flex-1 sm:flex-none">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Ajouter un step</span>
+              <span className="sm:hidden">Step</span>
             </Button>
-            <Button onClick={addNewBlock} size="sm">
-              <Repeat className="h-4 w-4 mr-2" />
-              Nouveau bloc
+            <Button onClick={addNewBlock} size="sm" className="flex-1 sm:flex-none">
+              <Repeat className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nouveau bloc</span>
+              <span className="sm:hidden">Bloc</span>
             </Button>
           </div>
         </div>
 
         {/* Summary */}
         {elements.length > 0 && (
-          <div className="flex gap-6 text-sm text-muted-foreground mt-4 pt-4 border-t">
-            <div>
-              <span className="font-semibold text-foreground">{totalSteps}</span> étape{totalSteps > 1 ? 's' : ''} totale{totalSteps > 1 ? 's' : ''}
+          <div className="flex flex-wrap gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">{totalSteps}</span>
+              <span className="whitespace-nowrap">étape{totalSteps > 1 ? 's' : ''}</span>
             </div>
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              <span className="font-semibold text-foreground">{(totalDistance / 1000).toFixed(2)}</span> km
+            <Separator orientation="vertical" className="hidden sm:block h-5" />
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">{(totalDistance / 1000).toFixed(2)}</span>
+              <span>km</span>
             </div>
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              VMA: <span className="font-semibold text-primary">{vma}</span> km/h
+            <Separator orientation="vertical" className="hidden sm:block h-5" />
+            <div className="flex items-center gap-2">
+              <span>VMA:</span>
+              <span className="font-semibold text-primary">{vma}</span>
+              <span>km/h</span>
             </div>
           </div>
         )}
@@ -191,15 +197,15 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
 
       <CardContent>
         {elements.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-8 sm:py-12 border-2 border-dashed rounded-lg px-4">
+            <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground/50 mb-3 sm:mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
               Aucune étape pour le moment
             </p>
             <div className="flex gap-2 justify-center">
-              <Button onClick={addStep} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Commencer l&apos;entraînement
+              <Button onClick={addStep} size="sm" className="text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                Commencer
               </Button>
             </div>
           </div>
@@ -210,38 +216,54 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
             onDragEnd={handleDragEnd}
           >
             <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8"></TableHead>
-                    <TableHead>Distance</TableHead>
-                    <TableHead>% VMA</TableHead>
-                    <TableHead>Vitesse</TableHead>
-                    <TableHead>Temps</TableHead>
-                    <TableHead>Récup</TableHead>
-                    <TableHead className="w-16">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <SortableContext
-                    items={elements.map(el => el.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {elements.map((element, index) => (
-                      <SortableElementRow
-                        key={element.id}
-                        element={element}
-                        index={index}
-                        vma={vma}
-                        onUpdate={(el) => updateElement(index, el)}
-                        onUpdateSingleStep={(step) => updateSingleStep(index, step)}
-                        onDelete={() => deleteElement(index)}
-                        onDuplicate={() => duplicateElement(index)}
-                      />
-                    ))}
-                  </SortableContext>
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[550px] sm:min-w-[600px] md:min-w-[700px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-6 sm:w-8 px-2"></TableHead>
+                      <TableHead className="min-w-[70px] sm:min-w-[90px] px-2 sm:px-3 text-xs sm:text-sm">
+                        <span className="hidden sm:inline">Distance</span>
+                        <span className="sm:hidden">Dist.</span>
+                      </TableHead>
+                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">
+                        <span className="hidden sm:inline">% VMA</span>
+                        <span className="sm:hidden">%</span>
+                      </TableHead>
+                      <TableHead className="min-w-[65px] sm:min-w-[90px] px-2 sm:px-3 text-xs sm:text-sm">
+                        <span className="hidden sm:inline">Vitesse</span>
+                        <span className="sm:hidden">V.</span>
+                      </TableHead>
+                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">Temps</TableHead>
+                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">
+                        <span className="hidden sm:inline">Récup</span>
+                        <span className="sm:hidden">Réc.</span>
+                      </TableHead>
+                      <TableHead className="w-14 sm:w-16 px-2 text-xs sm:text-sm">
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <SortableContext
+                      items={elements.map(el => el.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {elements.map((element, index) => (
+                        <SortableElementRow
+                          key={element.id}
+                          element={element}
+                          index={index}
+                          vma={vma}
+                          onUpdate={(el) => updateElement(index, el)}
+                          onUpdateSingleStep={(step) => updateSingleStep(index, step)}
+                          onDelete={() => deleteElement(index)}
+                          onDuplicate={() => duplicateElement(index)}
+                        />
+                      ))}
+                    </SortableContext>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </DndContext>
         )}

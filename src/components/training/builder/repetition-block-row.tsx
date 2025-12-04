@@ -109,100 +109,173 @@ export function RepetitionBlockRow({
         style={style}
         className={`bg-gradient-to-r from-primary/10 to-primary/5 border-y-2 border-primary/30 ${isDragging ? 'opacity-50' : ''}`}
       >
-        <td colSpan={7} className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Drag Handle */}
-              {dragHandleProps && (
-                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                  <div className="h-5 w-5 text-muted-foreground">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <circle cx="5" cy="5" r="1.5" />
-                      <circle cx="15" cy="5" r="1.5" />
-                      <circle cx="5" cy="10" r="1.5" />
-                      <circle cx="15" cy="10" r="1.5" />
-                      <circle cx="5" cy="15" r="1.5" />
-                      <circle cx="15" cy="15" r="1.5" />
-                    </svg>
-                  </div>
-                </div>
-              )}
-
-              {/* Expand/Collapse Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="h-8 w-8 p-0"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-
-              {/* Repetition Icon & Badge */}
-              <Repeat className="h-5 w-5 text-primary" />
-              <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1">
-                Bloc de répétition
-              </Badge>
-
-              {/* Repetition Count Input */}
+        <td colSpan={7} className="px-2 sm:px-4 py-2 sm:py-3">
+          <div className="space-y-2 sm:space-y-0">
+            {/* Mobile Layout: Stacked */}
+            <div className="flex sm:hidden flex-col gap-2">
+              {/* Line 1: Controls */}
               <div className="flex items-center gap-2">
+                {/* Drag Handle */}
+                {dragHandleProps && (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+                    <div className="h-4 w-4 text-muted-foreground">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <circle cx="5" cy="5" r="1.5" />
+                        <circle cx="15" cy="5" r="1.5" />
+                        <circle cx="5" cy="10" r="1.5" />
+                        <circle cx="15" cy="10" r="1.5" />
+                        <circle cx="5" cy="15" r="1.5" />
+                        <circle cx="15" cy="15" r="1.5" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expand/Collapse */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-7 w-7 p-0 flex-shrink-0"
+                >
+                  {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                </Button>
+
+                {/* Badge + Repetitions */}
+                <Badge className="bg-primary text-primary-foreground border-0 px-2 py-0.5 text-xs">
+                  Bloc
+                </Badge>
                 <Input
                   type="number"
                   value={block.repetitions}
                   onChange={(e) => handleRepetitionsChange(parseInt(e.target.value) || 1)}
-                  className="w-20 h-8"
+                  className="w-12 h-7 text-xs"
                   min="1"
                   max="50"
                 />
-                <span className="text-sm font-medium">× répétitions</span>
+                <span className="text-xs font-medium">× rép.</span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''}
+                </span>
               </div>
 
-              {/* Step count */}
-              <span className="text-sm text-muted-foreground">
-                ({safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''})
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddStep}
-                className="h-8"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Ajouter une étape
-              </Button>
-              {onDuplicate && (
+              {/* Line 2: Actions */}
+              <div className="flex items-center gap-1 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddStep}
+                  className="h-7 text-xs px-2"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Étape
+                </Button>
+                {onDuplicate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDuplicate}
+                    className="h-7 w-7 p-0 hover:bg-primary/10"
+                    title="Dupliquer le bloc"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onDuplicate}
-                  className="h-8 w-8 p-0 hover:bg-primary/10"
-                  title="Dupliquer le bloc"
+                  onClick={handleDeleteClick}
+                  className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Supprimer le bloc"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDeleteClick}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                title="Supprimer le bloc"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              </div>
+            </div>
+
+            {/* Desktop Layout: Single Line */}
+            <div className="hidden sm:flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* Drag Handle */}
+                {dragHandleProps && (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+                    <div className="h-5 w-5 text-muted-foreground">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <circle cx="5" cy="5" r="1.5" />
+                        <circle cx="15" cy="5" r="1.5" />
+                        <circle cx="5" cy="10" r="1.5" />
+                        <circle cx="15" cy="10" r="1.5" />
+                        <circle cx="5" cy="15" r="1.5" />
+                        <circle cx="15" cy="15" r="1.5" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expand/Collapse */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-8 w-8 p-0"
+                >
+                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+
+                <Repeat className="h-5 w-5 text-primary" />
+                <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1 text-xs">
+                  Bloc
+                </Badge>
+
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={block.repetitions}
+                    onChange={(e) => handleRepetitionsChange(parseInt(e.target.value) || 1)}
+                    className="w-20 h-8 text-sm"
+                    min="1"
+                    max="50"
+                  />
+                  <span className="text-sm font-medium">× rép.</span>
+                </div>
+
+                <span className="text-sm text-muted-foreground">
+                  ({safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''})
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddStep}
+                  className="h-8 text-sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Ajouter une étape
+                </Button>
+                {onDuplicate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDuplicate}
+                    className="h-8 w-8 p-0 hover:bg-primary/10"
+                    title="Dupliquer le bloc"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteClick}
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Supprimer le bloc"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </td>
@@ -244,11 +317,11 @@ export function RepetitionBlockRow({
       {/* Block Footer */}
       {isExpanded && (
         <tr className="border-b-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-          <td colSpan={7} className="px-4 py-1.5">
+          <td colSpan={7} className="px-2 sm:px-4 py-1.5">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-primary/20" />
-              <span className="font-medium">
-                Fin du bloc ({block.repetitions}× {safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''})
+              <span className="font-medium whitespace-nowrap">
+                Fin du bloc ({block.repetitions}× {safeSteps.length})
               </span>
               <div className="h-px flex-1 bg-primary/20" />
             </div>

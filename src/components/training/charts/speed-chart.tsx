@@ -27,10 +27,10 @@ export function SpeedChart({ program }: SpeedChartProps) {
   }));
 
   return (
-    <div className="w-full bg-card rounded-lg border p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">Évolution de la vitesse</h3>
-        <p className="text-sm text-muted-foreground">
+    <div className="w-full bg-card rounded-lg border p-4 sm:p-6">
+      <div className="mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg font-semibold">Évolution de la vitesse</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Vitesse et pourcentage de VMA par étape
         </p>
       </div>

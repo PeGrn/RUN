@@ -40,34 +40,34 @@ export function VMASelector({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10">
-        <CardTitle className="flex items-center justify-between">
-          <span>Votre VMA</span>
-          <Badge variant="outline" className="text-lg font-bold px-4 py-1">
+      <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6">
+        <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+          <span className="truncate">Votre VMA</span>
+          <Badge variant="outline" className="text-base sm:text-lg font-bold px-3 sm:px-4 py-0.5 sm:py-1 whitespace-nowrap ml-2">
             {localValue} km/h
           </Badge>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs sm:text-sm mt-1.5">
           Sélectionnez votre Vitesse Maximale Aérobie
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-6">
+      <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* VMA Display */}
           <div className="text-center space-y-2">
             <div className="relative">
-              <div className="text-6xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+              <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
                 {localValue}
               </div>
-              <div className="text-sm text-muted-foreground">km/h</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">km/h</div>
             </div>
-            <Badge className={`${level.color} text-white border-0`}>
+            <Badge className={`${level.color} text-white border-0 text-xs sm:text-sm`}>
               {level.label}
             </Badge>
           </div>
 
           {/* Slider */}
-          <div className="space-y-4 px-2">
+          <div className="space-y-3 sm:space-y-4 px-1 sm:px-2">
             <Slider
               value={[localValue]}
               onValueChange={handleSliderChange}
@@ -85,7 +85,7 @@ export function VMASelector({
           </div>
 
           {/* Quick Select Buttons */}
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             {[12, 14, 16, 18, 20].map((vma) => (
               <button
                 key={vma}
@@ -94,7 +94,7 @@ export function VMASelector({
                   onChange(vma);
                 }}
                 className={`
-                  px-3 py-2 rounded-md text-sm font-medium transition-all
+                  px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all
                   ${localValue === vma
                     ? 'bg-primary text-primary-foreground shadow-md scale-105'
                     : 'bg-secondary hover:bg-secondary/80'

@@ -118,5 +118,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+
+  /* Prevent horizontal scroll on all pages */
+  html {
+    overflow-x: hidden;
   }
 }

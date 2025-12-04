@@ -29,10 +29,10 @@ export function DistanceChart({ program }: DistanceChartProps) {
   });
 
   return (
-    <div className="w-full bg-card rounded-lg border p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">Distance cumulée</h3>
-        <p className="text-sm text-muted-foreground">
+    <div className="w-full bg-card rounded-lg border p-4 sm:p-6">
+      <div className="mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg font-semibold">Distance cumulée</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Progression de la distance au fil des étapes
         </p>
       </div>
@@ -79,14 +79,14 @@ export function DistanceChart({ program }: DistanceChartProps) {
         </AreaChart>
       </ResponsiveContainer>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <div>
+      <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 text-xs sm:text-sm">
+        <div className="whitespace-nowrap">
           <span className="text-muted-foreground">Distance totale:</span>
           <span className="ml-2 font-semibold">
             {(program.totalDistance / 1000).toFixed(2)} km
           </span>
         </div>
-        <div>
+        <div className="whitespace-nowrap">
           <span className="text-muted-foreground">Durée estimée:</span>
           <span className="ml-2 font-semibold">{program.estimatedDuration}</span>
         </div>
