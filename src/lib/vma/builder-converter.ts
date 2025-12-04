@@ -30,6 +30,12 @@ export function convertBuilderElementsToSteps(elements: TrainingElement[]): Trai
 
   // All elements are RepetitionBlocks now
   elements.forEach((block) => {
+    // Safety check: ensure block has steps array
+    if (!block.steps || !Array.isArray(block.steps)) {
+      console.warn('Invalid block structure: missing steps array', block);
+      return;
+    }
+
     // For each block, create steps with the block's repetition count
     block.steps.forEach((builderStep) => {
       const step = convertBuilderStepToTrainingStep(builderStep, stepNumber++, block.repetitions);

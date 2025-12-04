@@ -3,6 +3,8 @@ import { getGarminAuth, getFullActivity, downloadActivityGPX } from "@/actions/g
 import Link from "next/link";
 import { ActivityMap } from "./activity-map";
 import { ActivityCharts } from "./activity-charts";
+import { Header } from "@/components/header";
+import { ChevronLeft } from "lucide-react";
 
 export default async function ActivityDetailPage({
   params,
@@ -69,27 +71,30 @@ export default async function ActivityDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-      <header className="bg-white dark:bg-zinc-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link
-            href="/dashboard"
-            className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 mb-2 inline-block"
-          >
-            ← Retour au dashboard
-          </Link>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            {activity.activity_name || "Activité sans nom"}
-          </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {activity.activity_type_dto?.type_key || "Activity"} •{" "}
-            {summary.start_time_local ? new Date(summary.start_time_local).toLocaleString("fr-FR", {
-              dateStyle: "full",
-              timeStyle: "short",
-            }) : "Date inconnue"}
-          </p>
+    <>
+      <Header isAuthenticated={true} />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+        <div className="bg-white dark:bg-zinc-800 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 mb-3"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Retour au dashboard
+            </Link>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+              {activity.activity_name || "Activité sans nom"}
+            </h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              {activity.activity_type_dto?.type_key || "Activity"} •{" "}
+              {summary.start_time_local ? new Date(summary.start_time_local).toLocaleString("fr-FR", {
+                dateStyle: "full",
+                timeStyle: "short",
+              }) : "Date inconnue"}
+            </p>
+          </div>
         </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats principales */}
@@ -396,6 +401,7 @@ export default async function ActivityDetailPage({
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </>
   );
 }

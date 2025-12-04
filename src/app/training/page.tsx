@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { VMASelector, TrainingPlanDisplay } from '@/components/training';
 import { TrainingBuilder } from '@/components/training/builder';
 import { SpeedChart, DistanceChart } from '@/components/training/charts';
@@ -11,10 +11,26 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Download, Edit, Eye, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Header } from '@/components/header';
 
 export default function TrainingPage() {
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
+
+  // Validate and clean builder elements on load
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // Check if elements are valid
+    const hasInvalidElements = builderElements.some(
+      (element) => !element.steps || !Array.isArray(element.steps)
+    );
+
+    if (hasInvalidElements) {
+      console.warn('Invalid builder elements detected, resetting to empty array');
+      setBuilderElements([]);
+    }
+  }, [isLoaded, builderElements, setBuilderElements]);
 
   // Calculate program based on builder elements
   const program = useMemo(() => {
@@ -40,27 +56,8 @@ export default function TrainingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-12 md:py-16">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-6 w-6 text-primary" />
-              <span className="text-sm font-semibold text-primary uppercase tracking-wide">
-                Entraînement VMA
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Créez votre programme d&apos;entraînement personnalisé
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              Optimisez vos performances avec un plan fractionné adapté à votre VMA.
-              Chaque étape est calculée précisément pour maximiser vos progrès.
-            </p>
-          </div>
-        </div>
-      </div>
+    <>
+      <Header />
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
@@ -151,6 +148,6 @@ export default function TrainingPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

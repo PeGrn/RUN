@@ -8,6 +8,7 @@ import {
 } from "@/actions/garmin";
 import Link from "next/link";
 import LogoutButton from "./logout-button";
+import { Header } from "@/components/header";
 
 export default async function DashboardPage() {
   const auth = await getGarminAuth();
@@ -31,24 +32,26 @@ export default async function DashboardPage() {
   const stress = (stressResult.success && stressResult.data) ? stressResult.data : [];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-      <header className="bg-white dark:bg-zinc-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                Dashboard Garmin
-              </h1>
-              {profile && (
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Bonjour, {profile.display_name || profile.user_name}
-                </p>
-              )}
+    <>
+      <Header isAuthenticated={true} />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+        <div className="bg-white dark:bg-zinc-800 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                  Dashboard Garmin
+                </h1>
+                {profile && (
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                    Bonjour, {profile.display_name || profile.user_name}
+                  </p>
+                )}
+              </div>
+              <LogoutButton />
             </div>
-            <LogoutButton />
           </div>
         </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -232,6 +235,7 @@ export default async function DashboardPage() {
           )}
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }
