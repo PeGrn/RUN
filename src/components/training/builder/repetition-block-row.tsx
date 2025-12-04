@@ -35,8 +35,11 @@ export function RepetitionBlockRow({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Safety check: ensure steps array exists
+  const safeSteps = block.steps && Array.isArray(block.steps) ? block.steps : [];
+
   const handleDeleteClick = () => {
-    if (block.steps.length > 1) {
+    if (safeSteps.length > 1) {
       setShowDeleteDialog(true);
     } else {
       onDelete();
@@ -56,7 +59,7 @@ export function RepetitionBlockRow({
   };
 
   const handleStepChange = (index: number, step: BuilderStep) => {
-    const newSteps = [...block.steps];
+    const newSteps = [...safeSteps];
     newSteps[index] = step;
     onChange({
       ...block,
@@ -67,16 +70,16 @@ export function RepetitionBlockRow({
   const handleAddStep = () => {
     onChange({
       ...block,
-      steps: [...block.steps, createEmptyStep()]
+      steps: [...safeSteps, createEmptyStep()]
     });
   };
 
   const handleDeleteStep = (index: number) => {
-    if (block.steps.length === 1) {
+    if (safeSteps.length === 1) {
       // If it's the last step, delete the entire block
       onDelete();
     } else {
-      const newSteps = block.steps.filter((_, i) => i !== index);
+      const newSteps = safeSteps.filter((_, i) => i !== index);
       onChange({
         ...block,
         steps: newSteps
@@ -85,12 +88,12 @@ export function RepetitionBlockRow({
   };
 
   const handleDuplicateStep = (index: number) => {
-    const stepToDuplicate = block.steps[index];
+    const stepToDuplicate = safeSteps[index];
     const duplicatedStep = {
       ...stepToDuplicate,
       id: crypto.randomUUID()
     };
-    const newSteps = [...block.steps];
+    const newSteps = [...safeSteps];
     newSteps.splice(index + 1, 0, duplicatedStep);
     onChange({
       ...block,
@@ -165,7 +168,7 @@ export function RepetitionBlockRow({
 
               {/* Step count */}
               <span className="text-sm text-muted-foreground">
-                ({block.steps.length} étape{block.steps.length > 1 ? 's' : ''})
+                ({safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''})
               </span>
             </div>
 
@@ -210,11 +213,11 @@ export function RepetitionBlockRow({
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleConfirmDelete}
         title="Supprimer ce bloc de répétition ?"
-        description={`Ce bloc contient ${block.steps.length} étapes. Cette action est irréversible.`}
+        description={`Ce bloc contient ${safeSteps.length} étapes. Cette action est irréversible.`}
       />
 
       {/* Block Steps (Indented) */}
-      {isExpanded && block.steps.map((step, index) => (
+      {isExpanded && safeSteps.map((step, index) => (
         <tr key={step.id} className="bg-primary/5 border-l-4 border-l-primary/40">
           <td className="w-8 px-2">
             <div className="h-full flex items-center justify-center">
@@ -245,7 +248,7 @@ export function RepetitionBlockRow({
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-primary/20" />
               <span className="font-medium">
-                Fin du bloc ({block.repetitions}× {block.steps.length} étape{block.steps.length > 1 ? 's' : ''})
+                Fin du bloc ({block.repetitions}× {safeSteps.length} étape{safeSteps.length > 1 ? 's' : ''})
               </span>
               <div className="h-px flex-1 bg-primary/20" />
             </div>

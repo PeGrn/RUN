@@ -75,18 +75,18 @@ export default async function ActivityDetailPage({
       <Header isAuthenticated={true} />
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="bg-white dark:bg-zinc-800 border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <Link
               href="/dashboard"
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 mb-3"
+              className="inline-flex items-center text-xs sm:text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 mb-2 sm:mb-3"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Retour au dashboard
             </Link>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50 truncate">
               {activity.activity_name || "Activité sans nom"}
             </h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               {activity.activity_type_dto?.type_key || "Activity"} •{" "}
               {summary.start_time_local ? new Date(summary.start_time_local).toLocaleString("fr-FR", {
                 dateStyle: "full",
@@ -96,15 +96,15 @@ export default async function ActivityDetailPage({
           </div>
         </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Stats principales */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {summary.distance && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Distance
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {(summary.distance / 1000).toFixed(2)}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">km</div>
@@ -112,33 +112,33 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.duration && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Durée
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50 break-words">
                 {formatDuration(summary.duration)}
               </div>
             </div>
           )}
 
           {summary.average_speed && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Allure moyenne
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {formatPace(summary.average_speed)}
               </div>
             </div>
           )}
 
           {summary.average_hr && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 FC moyenne
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {summary.average_hr}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -148,8 +148,8 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.calories && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Calories
               </div>
               <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -162,11 +162,11 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.elevation_gain && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Dénivelé+
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {Math.round(summary.elevation_gain)}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">m</div>
@@ -174,11 +174,11 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.average_run_cadence && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Cadence moyenne
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {Math.round(summary.average_run_cadence)}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -188,22 +188,22 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.training_effect && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Training Effect
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {summary.training_effect.toFixed(1)}
               </div>
             </div>
           )}
 
           {summary.max_speed && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Vitesse max
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {(summary.max_speed * 3.6).toFixed(1)}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -213,11 +213,11 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.elevation_loss && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Dénivelé-
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {Math.round(summary.elevation_loss)}
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">m</div>
@@ -225,18 +225,18 @@ export default async function ActivityDetailPage({
           )}
 
           {summary.steps && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
-              <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Pas
               </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <div className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                 {summary.steps.toLocaleString('fr-FR')}
               </div>
             </div>
           )}
 
           {summary.stride_length && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-3 sm:p-4">
               <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
                 Longueur de foulée
               </div>
@@ -264,38 +264,38 @@ export default async function ActivityDetailPage({
 
         {/* Carte du parcours */}
         {gpxResult.success && gpxResult.data && (
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <ActivityMap gpxData={gpxResult.data} />
           </div>
         )}
 
         {/* Graphiques d'analyse */}
         {activity.laps && activity.laps.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <ActivityCharts laps={activity.laps} activityName={activity.activity_name} />
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Laps */}
           {activity.laps && activity.laps.length > 0 && (
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   Tours ({activity.laps.length})
                 </h2>
               </div>
-              <div className="p-6 max-h-96 overflow-y-auto">
-                <div className="space-y-3">
+              <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
+                <div className="space-y-2 sm:space-y-3">
                   {activity.laps.map((lap: any, idx: number) => (
                     <div
                       key={idx}
-                      className="border border-zinc-200 dark:border-zinc-700 rounded p-3"
+                      className="border border-zinc-200 dark:border-zinc-700 rounded p-2 sm:p-3"
                     >
-                      <div className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
+                      <div className="font-medium text-sm sm:text-base text-zinc-900 dark:text-zinc-50 mb-2">
                         Tour {lap.lap_index + 1}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-xs sm:text-sm">
                         <div className="text-zinc-600 dark:text-zinc-400">
                           Distance: {(lap.distance / 1000).toFixed(2)} km
                         </div>
@@ -328,13 +328,13 @@ export default async function ActivityDetailPage({
           {/* Splits */}
           {activity.splits && activity.splits.length > 0 && (
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   Splits km par km ({activity.splits.length})
                 </h2>
               </div>
-              <div className="p-6 max-h-96 overflow-y-auto">
-                <div className="space-y-2">
+              <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
+                <div className="space-y-1.5 sm:space-y-2">
                   {activity.splits.map((split: any, idx: number) => (
                     <div
                       key={idx}
@@ -362,16 +362,16 @@ export default async function ActivityDetailPage({
 
         {/* Météo */}
         {activity.weather && (
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow mt-6 p-6">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow mt-4 sm:mt-6 p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-3 sm:mb-4">
               Conditions météo
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
               <div>
                 <span className="text-zinc-500 dark:text-zinc-400">
                   Température:
                 </span>
-                <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="ml-1 sm:ml-2 font-medium text-zinc-900 dark:text-zinc-50">
                   {fahrenheitToCelsius(activity.weather.temp)}°C
                 </span>
               </div>
@@ -379,7 +379,7 @@ export default async function ActivityDetailPage({
                 <span className="text-zinc-500 dark:text-zinc-400">
                   Ressenti:
                 </span>
-                <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="ml-1 sm:ml-2 font-medium text-zinc-900 dark:text-zinc-50">
                   {fahrenheitToCelsius(activity.weather.apparent_temp)}°C
                 </span>
               </div>
@@ -387,13 +387,13 @@ export default async function ActivityDetailPage({
                 <span className="text-zinc-500 dark:text-zinc-400">
                   Humidité:
                 </span>
-                <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="ml-1 sm:ml-2 font-medium text-zinc-900 dark:text-zinc-50">
                   {activity.weather.relative_humidity}%
                 </span>
               </div>
               <div>
                 <span className="text-zinc-500 dark:text-zinc-400">Vent:</span>
-                <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="ml-1 sm:ml-2 font-medium text-zinc-900 dark:text-zinc-50">
                   {activity.weather.wind_speed} km/h {activity.weather.wind_direction_compass_point}
                 </span>
               </div>

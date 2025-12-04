@@ -59,11 +59,32 @@ export default function TrainingPage() {
     <>
       <Header />
 
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
+                Entraînement VMA
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4">
+              Créez votre programme d&apos;entraînement personnalisé
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
+              Optimisez vos performances avec un plan fractionné adapté à votre VMA.
+              Chaque étape est calculée précisément pour maximiser vos progrès.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[320px_1fr] xl:grid-cols-[380px_1fr]">
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
             {/* VMA Selector */}
             <VMASelector value={vma} onChange={setVMA} />
 
@@ -81,9 +102,9 @@ export default function TrainingPage() {
             </div>
 
             {/* Info Card */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2 text-sm">
               <h3 className="font-semibold">💡 Conseil</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
                 La VMA (Vitesse Maximale Aérobie) est votre vitesse de course maximale que vous
                 pouvez maintenir pendant 4 à 6 minutes.
               </p>
@@ -91,20 +112,23 @@ export default function TrainingPage() {
           </div>
 
           {/* Training Builder/Display */}
-          <div>
+          <div className="order-1 lg:order-2">
             <Tabs defaultValue="builder" className="w-full">
-              <TabsList className="mb-6">
-                <TabsTrigger value="builder" className="flex items-center gap-2">
-                  <Edit className="h-4 w-4" />
-                  Créer
+              <TabsList className="mb-4 sm:mb-6 w-full sm:w-auto grid grid-cols-3 sm:inline-grid">
+                <TabsTrigger value="builder" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Créer</span>
+                  <span className="sm:hidden">Créer</span>
                 </TabsTrigger>
-                <TabsTrigger value="preview" className="flex items-center gap-2" disabled={!program}>
-                  <Eye className="h-4 w-4" />
-                  Aperçu
+                <TabsTrigger value="preview" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" disabled={!program}>
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Aperçu</span>
+                  <span className="sm:hidden">Aperçu</span>
                 </TabsTrigger>
-                <TabsTrigger value="charts" className="flex items-center gap-2" disabled={!program}>
-                  <BarChart3 className="h-4 w-4" />
-                  Statistiques
+                <TabsTrigger value="charts" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" disabled={!program}>
+                  <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Statistiques</span>
+                  <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
               </TabsList>
 

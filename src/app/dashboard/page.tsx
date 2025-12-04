@@ -36,32 +36,34 @@ export default async function DashboardPage() {
       <Header isAuthenticated={true} />
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="bg-white dark:bg-zinc-800 border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex justify-between items-start sm:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50 truncate">
                   Dashboard Garmin
                 </h1>
                 {profile && (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 truncate">
                     Bonjour, {profile.display_name || profile.user_name}
                   </p>
                 )}
               </div>
-              <LogoutButton />
+              <div className="flex-shrink-0">
+                <LogoutButton />
+              </div>
             </div>
           </div>
         </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Profil Card */}
           {profile && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-50">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
                 Profil
               </h2>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs sm:text-sm">
                 <p className="text-zinc-600 dark:text-zinc-400">
                   <span className="font-medium">Nom:</span> {profile.full_name}
                 </p>
@@ -82,14 +84,14 @@ export default async function DashboardPage() {
           )}
 
           {/* Stats Pas */}
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-50">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
               Pas (7 derniers jours)
             </h2>
             {steps && steps.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {steps.slice(-3).map((day: any) => (
-                  <div key={day.calendar_date} className="text-sm">
+                  <div key={day.calendar_date} className="text-xs sm:text-sm">
                     <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                       <span>
                         {new Date(day.calendar_date).toLocaleDateString("fr-FR")}
@@ -107,27 +109,27 @@ export default async function DashboardPage() {
                 ))}
                 <Link
                   href="/stats/steps"
-                  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 inline-block mt-2"
                 >
                   Voir tout →
                 </Link>
               </div>
             ) : (
-              <p className="text-sm text-zinc-500 dark:text-zinc-500">
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
                 Aucune donnée disponible
               </p>
             )}
           </div>
 
           {/* Stats Stress */}
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-50">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
               Stress (7 derniers jours)
             </h2>
             {stress && stress.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {stress.slice(-3).map((day: any) => (
-                  <div key={day.calendar_date} className="text-sm">
+                  <div key={day.calendar_date} className="text-xs sm:text-sm">
                     <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                       <span>
                         {new Date(day.calendar_date).toLocaleDateString("fr-FR")}
@@ -140,7 +142,7 @@ export default async function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-zinc-500 dark:text-zinc-500">
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
                 Aucune donnée disponible
               </p>
             )}
@@ -149,8 +151,8 @@ export default async function DashboardPage() {
 
         {/* Activités récentes */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-700">
+            <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Activités récentes
             </h2>
           </div>
@@ -161,14 +163,14 @@ export default async function DashboardPage() {
                 <Link
                   key={activity.activity_id}
                   href={`/activity/${activity.activity_id}`}
-                  className="block px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
+                  className="block px-4 sm:px-6 py-3 sm:py-4 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors active:scale-[0.99]"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium text-zinc-900 dark:text-zinc-50">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-sm sm:text-base text-zinc-900 dark:text-zinc-50 truncate">
                         {activity.activity_name}
                       </h3>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 truncate">
                         {activity.activity_type?.type_key || "Activity"} •{" "}
                         {new Date(activity.start_time_local).toLocaleDateString(
                           "fr-FR",
@@ -182,7 +184,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
                     {activity.distance && (
                       <div>
                         <span className="text-zinc-500 dark:text-zinc-400">

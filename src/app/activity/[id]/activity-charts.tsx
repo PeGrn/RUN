@@ -528,7 +528,7 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-500" />
-            Évolution de l'Allure par Tour
+            Évolution de l&apos;Allure par Tour
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
             Allure moyenne: {Math.floor(avgPace)}:{Math.round((avgPace % 1) * 60).toString().padStart(2, "0")} /km

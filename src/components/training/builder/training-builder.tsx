@@ -71,6 +71,12 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
       // Add step to the last block
       const newElements = [...elements];
       const lastBlock = newElements[newElements.length - 1];
+
+      // Safety check: ensure steps array exists
+      if (!lastBlock.steps || !Array.isArray(lastBlock.steps)) {
+        lastBlock.steps = [];
+      }
+
       lastBlock.steps.push(createEmptyStep());
       handleElementsChange(newElements);
       toast.success('Étape ajoutée au bloc');
@@ -95,6 +101,12 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
 
   const duplicateElement = (index: number) => {
     const blockToDuplicate = elements[index];
+
+    // Safety check: ensure steps array exists
+    if (!blockToDuplicate.steps || !Array.isArray(blockToDuplicate.steps)) {
+      toast.error('Impossible de dupliquer un bloc invalide');
+      return;
+    }
 
     // All elements are RepetitionBlocks now
     const duplicatedBlock: TrainingElement = {
@@ -122,10 +134,14 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
   // Calculate total stats
   // All elements are now RepetitionBlocks
   const totalSteps = elements.reduce((sum, block) => {
+    // Safety check for undefined steps
+    if (!block.steps || !Array.isArray(block.steps)) return sum;
     return sum + (block.steps.length * block.repetitions);
   }, 0);
 
   const totalDistance = elements.reduce((sum, block) => {
+    // Safety check for undefined steps
+    if (!block.steps || !Array.isArray(block.steps)) return sum;
     const blockDistance = block.steps.reduce((s, step) => s + step.distance, 0);
     return sum + (blockDistance * block.repetitions);
   }, 0);
