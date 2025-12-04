@@ -25,9 +25,10 @@ export default async function DashboardPage() {
     ]);
 
   const profile = profileResult.success ? profileResult.data : null;
-  const activities = activitiesResult.success ? activitiesResult.data : [];
-  const steps = stepsResult.success ? stepsResult.data : [];
-  const stress = stressResult.success ? stressResult.data : [];
+  // Fallback to empty array if data is undefined
+  const activities = (activitiesResult.success && activitiesResult.data) ? activitiesResult.data : [];
+  const steps = (stepsResult.success && stepsResult.data) ? stepsResult.data : [];
+  const stress = (stressResult.success && stressResult.data) ? stressResult.data : [];
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
@@ -82,7 +83,7 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-50">
               Pas (7 derniers jours)
             </h2>
-            {steps.length > 0 ? (
+            {steps && steps.length > 0 ? (
               <div className="space-y-3">
                 {steps.slice(-3).map((day: any) => (
                   <div key={day.calendar_date} className="text-sm">
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-50">
               Stress (7 derniers jours)
             </h2>
-            {stress.length > 0 ? (
+            {stress && stress.length > 0 ? (
               <div className="space-y-3">
                 {stress.slice(-3).map((day: any) => (
                   <div key={day.calendar_date} className="text-sm">
@@ -151,7 +152,7 @@ export default async function DashboardPage() {
             </h2>
           </div>
 
-          {activities.length > 0 ? (
+          {activities && activities.length > 0 ? (
             <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {activities.map((activity: any) => (
                 <Link

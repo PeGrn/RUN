@@ -61,7 +61,8 @@ export async function loginToGarminWithMFA(
     }
 
     // Initial login that may require MFA
-    const result = await client.login(email, password, undefined, true);
+    // Force 'as any' here because TS doesn't see the overlap between OAuthToken and string[]
+    const result = await client.login(email, password, undefined, true) as any;
 
     if (Array.isArray(result) && result[0] === "needs_mfa") {
       return {

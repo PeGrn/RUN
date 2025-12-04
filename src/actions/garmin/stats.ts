@@ -17,9 +17,10 @@ export async function getDailySteps(end?: Date | string, days: number = 7) {
       success: true,
       data: steps.map((step) => ({
         calendar_date: step.calendar_date.toISOString(),
-        total_steps: step.total_steps,
-        total_distance: step.total_distance,
-        step_goal: step.step_goal,
+        // Casting to any to bypass the missing type definitions
+        total_steps: (step as any).total_steps,
+        total_distance: (step as any).total_distance,
+        step_goal: (step as any).step_goal,
       })),
     };
   } catch (error: any) {
@@ -40,11 +41,12 @@ export async function getWeeklySteps(end?: Date | string, weeks: number = 4) {
       success: true,
       data: steps.map((step) => ({
         calendar_date: step.calendar_date.toISOString(),
-        total_steps: step.total_steps,
-        average_steps: step.average_steps,
-        total_distance: step.total_distance,
-        average_distance: step.average_distance,
-        wellness_data_days_count: step.wellness_data_days_count,
+        // Casting to any to bypass missing type definitions here as well
+        total_steps: (step as any).total_steps,
+        average_steps: (step as any).average_steps,
+        total_distance: (step as any).total_distance,
+        average_distance: (step as any).average_distance,
+        wellness_data_days_count: (step as any).wellness_data_days_count,
       })),
     };
   } catch (error: any) {
@@ -67,11 +69,12 @@ export async function getDailyStress(end?: Date | string, days: number = 7) {
       success: true,
       data: stress.map((s) => ({
         calendar_date: s.calendar_date.toISOString(),
-        overall_stress_level: s.overall_stress_level,
-        rest_stress_duration: s.rest_stress_duration,
-        low_stress_duration: s.low_stress_duration,
-        medium_stress_duration: s.medium_stress_duration,
-        high_stress_duration: s.high_stress_duration,
+        // Casting to any to bypass missing type definitions for stress metrics
+        overall_stress_level: (s as any).overall_stress_level,
+        rest_stress_duration: (s as any).rest_stress_duration,
+        low_stress_duration: (s as any).low_stress_duration,
+        medium_stress_duration: (s as any).medium_stress_duration,
+        high_stress_duration: (s as any).high_stress_duration,
       })),
     };
   } catch (error: any) {
@@ -92,7 +95,8 @@ export async function getWeeklyStress(end?: Date | string, weeks: number = 4) {
       success: true,
       data: stress.map((s) => ({
         calendar_date: s.calendar_date.toISOString(),
-        value: s.value,
+        // Casting to any just in case 'value' is missing from the type def
+        value: (s as any).value,
       })),
     };
   } catch (error: any) {
