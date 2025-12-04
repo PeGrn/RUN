@@ -5,10 +5,7 @@ import {
   createRepetitionBlock,
   createEmptyStep,
   BuilderStep,
-  RepetitionBlock
 } from '@/lib/vma/builder-types';
-import { StepRow } from './step-row';
-import { RepetitionBlockRow } from './repetition-block-row';
 import { SortableElementRow } from './sortable-element-row';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,7 +137,7 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
           <div>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Construction de l'entraînement
+              Construction de l&apos;entraînement
             </CardTitle>
             <CardDescription>
               Créez votre programme étape par étape
@@ -186,7 +183,7 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
             <div className="flex gap-2 justify-center">
               <Button onClick={addStep} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Commencer l'entraînement
+                Commencer l&apos;entraînement
               </Button>
             </div>
           </div>

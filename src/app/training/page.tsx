@@ -52,7 +52,7 @@ export default function TrainingPage() {
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Créez votre programme d'entraînement personnalisé
+              Créez votre programme d&apos;entraînement personnalisé
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
               Optimisez vos performances avec un plan fractionné adapté à votre VMA.
@@ -126,7 +126,7 @@ export default function TrainingPage() {
                   <div className="text-center py-12 border-2 border-dashed rounded-lg">
                     <Eye className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                     <p className="text-muted-foreground">
-                      Créez des étapes dans l'onglet "Créer" pour voir l'aperçu
+                      Créez des étapes dans l&apos;onglet &quot;Créer&quot; pour voir l&apos;aperçu
                     </p>
                   </div>
                 )}
@@ -142,7 +142,7 @@ export default function TrainingPage() {
                   <div className="text-center py-12 border-2 border-dashed rounded-lg">
                     <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                     <p className="text-muted-foreground">
-                      Créez des étapes dans l'onglet "Créer" pour voir les statistiques
+                      Créez des étapes dans l&apos;onglet &quot;Créer&quot; pour voir les statistiques
                     </p>
                   </div>
                 )}

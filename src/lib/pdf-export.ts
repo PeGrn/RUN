@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
-import { VMAProgram, TrainingElement } from '@/lib/vma';
-import { calculateVMAProgram, convertBuilderElementsToSteps } from '@/lib/vma';
+import { TrainingElement } from '@/lib/vma';
+import { convertBuilderElementsToSteps } from '@/lib/vma';
 
 /**
  * Format seconds to MM:SS
@@ -25,7 +25,7 @@ function calculateTimeForVMA(
 }
 
 /**
- * Generate PDF table with VMA rows (12-23) and steps columns
+ * Generate PDF table with dynamic width and font scaling
  */
 export function generatePDF(
   builderElements: TrainingElement[],
@@ -41,33 +41,24 @@ export function generatePDF(
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
+  
+  // --- CONFIGURATION DES TAILLES FIXES ---
+  const vmaColWidth = 12;
+  const blockIndicatorWidth = 6; 
+  const rowHeight = 6; // Hauteur fixe demandée
 
   // Convert builder elements to steps to get step info
   const trainingSteps = convertBuilderElementsToSteps(builderElements);
 
-  // VMA range: 12.0 to 23.0 with half points
+  // VMA range: 12.0 to 23.0
   const vmaRange = [
     12.0, 13.0, 14.0, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5,
     18.0, 18.5, 19.0, 19.5, 20.0, 20.5, 21.0, 21.5, 22.0, 22.5, 23.0
   ];
 
-  // Header
-  doc.setFillColor(59, 130, 246);
-  doc.rect(0, 0, pageWidth, 25, 'F');
+  let yPos = 20;
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.text(programName, margin, 12);
-
-  doc.setFontSize(9);
-  doc.setFont(undefined, 'normal');
-  doc.text(new Date().toLocaleDateString('fr-FR'), margin, 19);
-
-  // Start table at yPos
-  let yPos = 32;
-
-  // Build column structure with separate columns for block indicators
+  // Build column structure
   interface ColumnInfo {
     type: 'vma' | 'block-indicator' | 'step';
     stepName?: string;
@@ -79,15 +70,12 @@ export function generatePDF(
 
   const columns: ColumnInfo[] = [{ type: 'vma' }];
 
-  // All elements are now RepetitionBlocks
   builderElements.forEach((block) => {
-    // Add block indicator column
     columns.push({
       type: 'block-indicator',
       blockReps: block.repetitions
     });
 
-    // Add steps in the block
     block.steps.forEach((step) => {
       columns.push({
         type: 'step',
@@ -100,60 +88,93 @@ export function generatePDF(
     });
   });
 
-  // Calculate column widths
-  const vmaColWidth = 20;
-  const blockIndicatorWidth = 12;
+  // --- LOGIQUE DE "ZOOM" / REMPLISSAGE AUTOMATIQUE ---
+
   const numBlockIndicators = columns.filter(c => c.type === 'block-indicator').length;
   const numStepColumns = columns.filter(c => c.type === 'step').length;
 
-  const availableWidth = pageWidth - margin * 2 - vmaColWidth - (numBlockIndicators * blockIndicatorWidth);
-  const stepColWidth = availableWidth / numStepColumns;
+  const availableWidth = pageWidth - (margin * 2);
+  const fixedUsedWidth = vmaColWidth + (numBlockIndicators * blockIndicatorWidth);
+  const remainingWidthForSteps = availableWidth - fixedUsedWidth;
 
-  // Reset text color
+  // Calcul de la largeur dynamique
+  let dynamicStepWidth = remainingWidthForSteps / (numStepColumns || 1);
+  
+  // Limites pour la largeur
+  const MIN_STEP_WIDTH = 10;
+  const MAX_STEP_WIDTH = 45; // Augmenté pour permettre un gros zoom si peu de colonnes
+
+  let finalStepColWidth = Math.min(Math.max(dynamicStepWidth, MIN_STEP_WIDTH), MAX_STEP_WIDTH);
+
+  // --- CALCUL DU ZOOM DE LA POLICE ---
+  const widthRatio = finalStepColWidth / MIN_STEP_WIDTH;
+  
+  const BASE_FONT_SIZE_DATA = 7;
+  const MAX_FONT_SIZE_DATA = 14; 
+  
+  const BASE_FONT_SIZE_HEADER = 6;
+  const MAX_FONT_SIZE_HEADER = 10;
+
+  const dynamicDataFontSize = Math.min(BASE_FONT_SIZE_DATA * (1 + (widthRatio - 1) * 0.6), MAX_FONT_SIZE_DATA);
+  const dynamicHeaderFontSize = Math.min(BASE_FONT_SIZE_HEADER * (1 + (widthRatio - 1) * 0.5), MAX_FONT_SIZE_HEADER);
+
+  // Recalcul de la largeur réelle finale du tableau pour le centrage
+  const totalTableWidth = fixedUsedWidth + (numStepColumns * finalStepColWidth);
+  let startX = (pageWidth - totalTableWidth) / 2;
+
+
+  // --- DESSIN DU TABLEAU ---
+
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(7);
 
-  // Draw table headers
-  let currentX = margin;
+  // 1. HEADER
+  let currentX = startX;
 
-  columns.forEach((col, index) => {
+  columns.forEach((col) => {
     let colWidth = 0;
 
     if (col.type === 'vma') {
       colWidth = vmaColWidth;
       doc.setFillColor(240, 240, 240);
       doc.rect(currentX, yPos, colWidth, 12, 'FD');
+      
       doc.setFont(undefined, 'bold');
-      doc.setFontSize(8);
-      doc.text('VMA', currentX + colWidth / 2, yPos + 7, { align: 'center' });
+      doc.setFontSize(9);
+      doc.text('VMA', currentX + colWidth / 2, yPos + 6, { align: 'center', baseline: 'middle' });
+
     } else if (col.type === 'block-indicator') {
       colWidth = blockIndicatorWidth;
       doc.setFillColor(220, 220, 220);
       doc.rect(currentX, yPos, colWidth, 12, 'FD');
+      
       doc.setFont(undefined, 'bold');
-      doc.setFontSize(7);
-      doc.text(`${col.blockReps}x`, currentX + colWidth / 2, yPos + 5, { align: 'center' });
-      doc.text('==>', currentX + colWidth / 2, yPos + 9, { align: 'center' });
+      doc.setFontSize(8);
+      doc.text(`${col.blockReps}x`, currentX + colWidth / 2, yPos + 4, { align: 'center', baseline: 'middle' });
+      doc.text('==>', currentX + colWidth / 2, yPos + 8, { align: 'center', baseline: 'middle' });
+
     } else if (col.type === 'step') {
-      colWidth = stepColWidth;
+      colWidth = finalStepColWidth;
       doc.setFillColor(240, 240, 240);
       doc.rect(currentX, yPos, colWidth, 12, 'FD');
 
-      // Format: "STEP NAME : Distance\nr = Rest"
-      const line1 = `${col.stepName} : ${col.distance}`;
+      const line1 = `${col.distance}`;
       const line2 = `r = ${col.rest}`;
 
+      // Distance (taille dynamique)
       doc.setFont(undefined, 'bold');
-      doc.setFontSize(6);
-      doc.text(line1, currentX + colWidth / 2, yPos + 5, {
+      doc.setFontSize(dynamicHeaderFontSize + 1);
+      doc.text(line1, currentX + colWidth / 2, yPos + 4, {
         align: 'center',
+        baseline: 'middle',
         maxWidth: colWidth - 2
       });
 
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(5.5);
-      doc.text(line2, currentX + colWidth / 2, yPos + 9.5, {
-        align: 'center'
+      // Récupération (taille dynamique)
+      doc.setFont(undefined, 'bold'); 
+      doc.setFontSize(dynamicHeaderFontSize);
+      doc.text(line2, currentX + colWidth / 2, yPos + 8.5, {
+        align: 'center',
+        baseline: 'middle'
       });
     }
 
@@ -162,48 +183,49 @@ export function generatePDF(
 
   yPos += 12;
 
-  // Row height
-  const rowHeight = 8;
-
-  // Draw data rows
+  // 2. DATA ROWS
   doc.setFont(undefined, 'normal');
+  
   vmaRange.forEach((vma, rowIndex) => {
-    // Alternate row colors
+    // ALTERNANCE COULEURS : Gris plus foncé (230) vs Blanc (255)
     if (rowIndex % 2 === 0) {
-      doc.setFillColor(250, 250, 250);
+      doc.setFillColor(230, 230, 230); // C'était 250, mis à 230 pour plus de contraste
     } else {
       doc.setFillColor(255, 255, 255);
     }
-    doc.rect(margin, yPos, pageWidth - margin * 2, rowHeight, 'F');
+    
+    doc.rect(startX, yPos, totalTableWidth, rowHeight, 'F');
 
-    // Draw cells
     let stepIndex = 0;
-    currentX = margin;
+    currentX = startX;
 
     columns.forEach((col) => {
       let colWidth = 0;
 
       if (col.type === 'vma') {
         colWidth = vmaColWidth;
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont(undefined, 'bold');
-        doc.text(`${vma}`, currentX + colWidth / 2, yPos + rowHeight / 2 + 1.5, {
-          align: 'center'
+        doc.text(`${vma}`, currentX + colWidth / 2, yPos + rowHeight / 2, {
+          align: 'center',
+          baseline: 'middle'
         });
       } else if (col.type === 'block-indicator') {
         colWidth = blockIndicatorWidth;
-        // Empty cell for block indicator in data rows
+        // Vide
       } else if (col.type === 'step') {
-        colWidth = stepColWidth;
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(7);
+        colWidth = finalStepColWidth;
+        
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(dynamicDataFontSize); 
 
         if (stepIndex < trainingSteps.length) {
           const step = trainingSteps[stepIndex];
           const time = calculateTimeForVMA(step.distance, step.vmaMultiplier, vma);
 
-          doc.text(time, currentX + colWidth / 2, yPos + rowHeight / 2 + 1.5, {
-            align: 'center'
+          doc.text(time, currentX + colWidth / 2, yPos + rowHeight / 2, {
+            align: 'center',
+            baseline: 'middle'
           });
 
           stepIndex++;
@@ -216,40 +238,31 @@ export function generatePDF(
     yPos += rowHeight;
   });
 
-  // Draw borders
+  // 3. BORDURES
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.1);
 
-  // Vertical lines
-  currentX = margin;
-  columns.forEach((col, index) => {
+  currentX = startX;
+  const tableBottomY = 20 + 12 + vmaRange.length * rowHeight;
+
+  columns.forEach((col) => {
     const colWidth = col.type === 'vma' ? vmaColWidth :
                      col.type === 'block-indicator' ? blockIndicatorWidth :
-                     stepColWidth;
+                     finalStepColWidth;
 
-    doc.line(currentX, 32, currentX, 32 + 12 + vmaRange.length * rowHeight);
+    doc.line(currentX, 20, currentX, tableBottomY);
     currentX += colWidth;
   });
-  // Last vertical line
-  doc.line(currentX, 32, currentX, 32 + 12 + vmaRange.length * rowHeight);
+  doc.line(currentX, 20, currentX, tableBottomY);
 
-  // Horizontal lines
-  doc.line(margin, 32, currentX, 32); // Top
-  doc.line(margin, 32 + 12, currentX, 32 + 12); // After header
+  // Lignes horizontales
+  doc.line(startX, 20, startX + totalTableWidth, 20); 
+  doc.line(startX, 20 + 12, startX + totalTableWidth, 20 + 12); 
+  
   for (let i = 0; i <= vmaRange.length; i++) {
-    const y = 32 + 12 + i * rowHeight;
-    doc.line(margin, y, currentX, y);
+    const y = 20 + 12 + i * rowHeight;
+    doc.line(startX, y, startX + totalTableWidth, y);
   }
-
-  // Footer
-  doc.setFontSize(7);
-  doc.setTextColor(150, 150, 150);
-  doc.text(
-    `Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`,
-    pageWidth / 2,
-    pageHeight - 5,
-    { align: 'center' }
-  );
 
   // Save PDF
   const fileName = `${programName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
