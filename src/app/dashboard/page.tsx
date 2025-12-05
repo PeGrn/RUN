@@ -40,12 +40,17 @@ export default async function DashboardPage() {
             <div className="flex justify-between items-start sm:items-center gap-3">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-50 truncate">
-                  Dashboard Garmin
+                  Activités Garmin
                 </h1>
                 {profile && (
+                  <div>
                   <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 truncate">
-                    Bonjour, {profile.display_name || profile.user_name}
+                    Bonjour, {profile.full_name}
                   </p>
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 truncate">
+                    Localisation : {profile.location || "Non renseigné"}
+                  </p>
+                  </div>
                 )}
               </div>
               <div className="flex-shrink-0">
@@ -56,98 +61,6 @@ export default async function DashboardPage() {
         </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {/* Profil Card */}
-          {profile && (
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
-                Profil
-              </h2>
-              <div className="space-y-2 text-xs sm:text-sm">
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  <span className="font-medium">Nom:</span> {profile.full_name}
-                </p>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  <span className="font-medium">Localisation:</span>{" "}
-                  {profile.location || "Non renseigné"}
-                </p>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  <span className="font-medium">Activité principale:</span>{" "}
-                  {profile.primary_activity || "Non renseigné"}
-                </p>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  <span className="font-medium">Niveau:</span>{" "}
-                  {profile.user_level}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Stats Pas */}
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
-              Pas (7 derniers jours)
-            </h2>
-            {steps && steps.length > 0 ? (
-              <div className="space-y-2 sm:space-y-3">
-                {steps.slice(-3).map((day: any) => (
-                  <div key={day.calendar_date} className="text-xs sm:text-sm">
-                    <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                      <span>
-                        {new Date(day.calendar_date).toLocaleDateString("fr-FR")}
-                      </span>
-                      <span className="font-medium">
-                        {day.total_steps?.toLocaleString() || "0"} pas
-                      </span>
-                    </div>
-                    {day.total_distance && (
-                      <div className="text-xs text-zinc-500 dark:text-zinc-500">
-                        {(day.total_distance / 1000).toFixed(2)} km
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <Link
-                  href="/stats/steps"
-                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 inline-block mt-2"
-                >
-                  Voir tout →
-                </Link>
-              </div>
-            ) : (
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
-                Aucune donnée disponible
-              </p>
-            )}
-          </div>
-
-          {/* Stats Stress */}
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow p-4 sm:p-6">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-zinc-900 dark:text-zinc-50">
-              Stress (7 derniers jours)
-            </h2>
-            {stress && stress.length > 0 ? (
-              <div className="space-y-2 sm:space-y-3">
-                {stress.slice(-3).map((day: any) => (
-                  <div key={day.calendar_date} className="text-xs sm:text-sm">
-                    <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                      <span>
-                        {new Date(day.calendar_date).toLocaleDateString("fr-FR")}
-                      </span>
-                      <span className="font-medium">
-                        Niveau {day.overall_stress_level}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
-                Aucune donnée disponible
-              </p>
-            )}
-          </div>
-        </div>
 
         {/* Activités récentes */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">

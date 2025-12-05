@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Dumbbell, Home, LogIn, LogOut, Menu } from "lucide-react";
+import { Activity, Dumbbell, Home, LogIn, LogOut, Menu, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -59,6 +59,17 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
         </Button>
       </Link>
 
+      <Link href="/sessions" onClick={onNavigate}>
+        <Button
+          variant={isActive("/sessions") ? "default" : "ghost"}
+          size={mobile ? "lg" : "sm"}
+          className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+        >
+          <History className="h-4 w-4" />
+          Historique
+        </Button>
+      </Link>
+
       {isAuthenticated ? (
         <Link href="/dashboard" onClick={onNavigate}>
           <Button
@@ -82,7 +93,7 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
             className={mobile ? "w-full justify-start gap-3" : "gap-2"}
           >
             <LogIn className="h-4 w-4" />
-            {mobile ? "Connexion Garmin" : "Connexion"}
+            Connexion Garmin
           </Button>
         </Link>
       )}
@@ -105,7 +116,7 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
           </nav>
 
           {/* Desktop Logout Button */}
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <div className="hidden md:flex items-center gap-2">
               <Button
                 variant="outline"
@@ -116,6 +127,10 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
                 <LogOut className="h-4 w-4 mr-2" />
                 {loading ? "Déconnexion..." : "Déconnexion"}
               </Button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-2 w-[120px]">
+              {/* Spacer pour maintenir la navigation centrée */}
             </div>
           )}
 

@@ -1,0 +1,28 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TrainingSession {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  vma         Float
+  pdfUrl      String   // URL Minio
+  pdfKey      String   // Clé S3 pour récupérer le fichier
+  totalDistance Float  // en mètres
+  totalTime     Int    // en secondes
+  steps         Json   // Stocker les étapes en JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String?  // Pour plus tard si authentification
+
+  @@index([createdAt])
+  @@map("training_sessions")
+}

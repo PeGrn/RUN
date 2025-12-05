@@ -25,12 +25,12 @@ function calculateTimeForVMA(
 }
 
 /**
- * Generate PDF table with dynamic width and font scaling
+ * Generate PDF and return both the doc and buffer
  */
-export function generatePDF(
+function createPDFDocument(
   builderElements: TrainingElement[],
   programName: string = 'Programme VMA'
-): void {
+): { doc: jsPDF; buffer: ArrayBuffer } {
   // Create landscape PDF
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -264,7 +264,30 @@ export function generatePDF(
     doc.line(startX, y, startX + totalTableWidth, y);
   }
 
-  // Save PDF
+  // Return doc and buffer
+  const buffer = doc.output('arraybuffer');
+  return { doc, buffer };
+}
+
+/**
+ * Generate PDF and download it
+ */
+export function generatePDF(
+  builderElements: TrainingElement[],
+  programName: string = 'Programme VMA'
+): void {
+  const { doc } = createPDFDocument(builderElements, programName);
   const fileName = `${programName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
   doc.save(fileName);
+}
+
+/**
+ * Generate PDF and return buffer for server-side operations
+ */
+export function generatePDFBuffer(
+  builderElements: TrainingElement[],
+  programName: string = 'Programme VMA'
+): Buffer {
+  const { buffer } = createPDFDocument(builderElements, programName);
+  return Buffer.from(buffer);
 }

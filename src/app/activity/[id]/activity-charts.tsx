@@ -133,6 +133,43 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
     };
   });
 
+  // Créer les données avec distance cumulée pour le graphique FC vs Allure avec steps
+  const correlationData: Array<{
+    distanceKm: number;
+    fc: number;
+    allure: number;
+    tour: string;
+  }> = [];
+
+  let cumulativeDistance = 0;
+  laps.forEach((lap) => {
+    const paceSecPerKm = lap.average_speed ? 1000 / lap.average_speed : 0;
+    const paceMinutes = Math.floor(paceSecPerKm / 60);
+    const paceSeconds = Math.floor(paceSecPerKm % 60);
+    const paceDecimal = paceMinutes + paceSeconds / 60;
+    const fc = lap.average_hr || 0;
+    const lapDistanceKm = lap.distance / 1000;
+    const tour = `T${lap.lap_index + 1}`;
+
+    // Point au début du tour
+    correlationData.push({
+      distanceKm: Number(cumulativeDistance.toFixed(3)),
+      fc,
+      allure: paceDecimal,
+      tour,
+    });
+
+    cumulativeDistance += lapDistanceKm;
+
+    // Point à la fin du tour
+    correlationData.push({
+      distanceKm: Number(cumulativeDistance.toFixed(3)),
+      fc,
+      allure: paceDecimal,
+      tour,
+    });
+  });
+
   // Calculer les zones de FC
   const maxHR = Math.max(...laps.map(l => l.max_hr || 0).filter(hr => hr > 0));
   const hrZones = chartData.reduce((acc, lap) => {
@@ -250,7 +287,7 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
         <CardContent>
           <ChartContainer config={chartConfig}>
             <ComposedChart
-              data={chartData}
+              data={correlationData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
             >
               <defs>
@@ -258,13 +295,20 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
                   <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
                 </linearGradient>
+                <linearGradient id="allureGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
-                dataKey="tour"
+                dataKey="distanceKm"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                type="number"
+                domain={[0, 'dataMax']}
+                label={{ value: 'Distance (km)', position: 'insideBottom', offset: -5 }}
               />
               <YAxis
                 yAxisId="left"
@@ -279,7 +323,7 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                reversed={true}
+                reversed={false}
                 label={{ value: 'Allure (min/km)', angle: 90, position: 'insideRight', style: { fill: '#3b82f6' } }}
                 tickFormatter={(value) => {
                   const min = Math.floor(value);
@@ -298,14 +342,13 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
                 strokeWidth={3}
                 name="FC"
               />
-              <Line
+              <Area
                 yAxisId="right"
-                type="monotone"
+                type="step"
                 dataKey="allure"
                 stroke="#3b82f6"
-                strokeWidth={3}
-                dot={{ fill: '#3b82f6', r: 4 }}
-                activeDot={{ r: 6 }}
+                fill="url(#allureGradient)"
+                strokeWidth={2.5}
                 name="Allure"
               />
             </ComposedChart>
@@ -542,15 +585,14 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig}>
-            <LineChart
+            <AreaChart
               data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
               <defs>
-                <linearGradient id="allureGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#ec4899" />
+                <linearGradient id="allureAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -564,7 +606,7 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                reversed={true}
+                reversed={false}
                 domain={['dataMin - 0.5', 'dataMax + 0.5']}
                 tickFormatter={(value) => {
                   const min = Math.floor(value);
@@ -573,16 +615,15 @@ export function ActivityCharts({ laps, activityName }: ActivityChartsProps) {
                 }}
               />
               <ChartTooltip content={<CustomTooltip formatAllure={formatAllure} />} />
-              <Line
-                type="monotone"
+              <Area
+                type="step"
                 dataKey="allure"
-                stroke="url(#allureGradient)"
-                strokeWidth={4}
-                dot={{ fill: '#3b82f6', r: 5 }}
-                activeDot={{ r: 7, fill: '#ec4899' }}
+                stroke="#3b82f6"
+                strokeWidth={2.5}
+                fill="url(#allureAreaGradient)"
                 name="Allure"
               />
-            </LineChart>
+            </AreaChart>
           </ChartContainer>
         </CardContent>
       </Card>

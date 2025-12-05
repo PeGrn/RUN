@@ -215,30 +215,41 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <div className="border rounded-lg overflow-hidden">
+            {/* Mobile View - Cards */}
+            <div className="md:hidden space-y-3">
+              <SortableContext
+                items={elements.map(el => el.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {elements.map((element, index) => (
+                  <SortableElementRow
+                    key={element.id}
+                    element={element}
+                    index={index}
+                    vma={vma}
+                    onUpdate={(el) => updateElement(index, el)}
+                    onUpdateSingleStep={(step) => updateSingleStep(index, step)}
+                    onDelete={() => deleteElement(index)}
+                    onDuplicate={() => duplicateElement(index)}
+                  />
+                ))}
+              </SortableContext>
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <Table className="min-w-[550px] sm:min-w-[600px] md:min-w-[700px]">
+                <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-6 sm:w-8 px-2"></TableHead>
-                      <TableHead className="min-w-[70px] sm:min-w-[90px] px-2 sm:px-3 text-xs sm:text-sm">
-                        <span className="hidden sm:inline">Distance</span>
-                        <span className="sm:hidden">Dist.</span>
-                      </TableHead>
-                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">
-                        <span className="hidden sm:inline">% VMA</span>
-                        <span className="sm:hidden">%</span>
-                      </TableHead>
-                      <TableHead className="min-w-[65px] sm:min-w-[90px] px-2 sm:px-3 text-xs sm:text-sm">
-                        <span className="hidden sm:inline">Vitesse</span>
-                        <span className="sm:hidden">V.</span>
-                      </TableHead>
-                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">Temps</TableHead>
-                      <TableHead className="min-w-[60px] sm:min-w-[80px] px-2 sm:px-3 text-xs sm:text-sm">
-                        <span className="hidden sm:inline">Récup</span>
-                        <span className="sm:hidden">Réc.</span>
-                      </TableHead>
-                      <TableHead className="w-14 sm:w-16 px-2 text-xs sm:text-sm">
+                      <TableHead className="w-8 px-2"></TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">Distance</TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">% VMA</TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">Vitesse</TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">Allure</TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">Temps</TableHead>
+                      <TableHead className="px-2 md:px-3 text-sm">Récup</TableHead>
+                      <TableHead className="w-16 px-2 text-sm">
                         <span className="sr-only">Actions</span>
                       </TableHead>
                     </TableRow>
