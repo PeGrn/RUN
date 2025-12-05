@@ -8,7 +8,6 @@ import {
 } from "@/actions/garmin";
 import Link from "next/link";
 import LogoutButton from "./logout-button";
-import { Header } from "@/components/header";
 
 export default async function DashboardPage() {
   const auth = await getGarminAuth();
@@ -32,9 +31,7 @@ export default async function DashboardPage() {
   const stress = (stressResult.success && stressResult.data) ? stressResult.data : [];
 
   return (
-    <>
-      <Header isAuthenticated={true} />
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="bg-white dark:bg-zinc-800 border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div className="flex justify-between items-start sm:items-center gap-3">
@@ -150,7 +147,6 @@ export default async function DashboardPage() {
           )}
         </div>
       </main>
-      </div>
-    </>
+    </div>
   );
 }

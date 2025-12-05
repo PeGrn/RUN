@@ -9,15 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/header";
 
 export default async function Home() {
   const auth = await getGarminAuth();
 
   return (
-    <>
-      <Header isAuthenticated={auth.isAuthenticated} />
-      <main className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-8 sm:p-8">
+    <main className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-8 sm:p-8">
         <div className="max-w-6xl w-full space-y-6 sm:space-y-8">
           <div className="text-center space-y-3 sm:space-y-4 px-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
@@ -99,6 +96,5 @@ export default async function Home() {
           </div>
         </div>
       </main>
-    </>
   );
 }

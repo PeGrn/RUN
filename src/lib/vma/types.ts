@@ -7,6 +7,7 @@ export interface TrainingStep {
   repetitions: number;
   group: 'warmup' | 'main' | 'cooldown';
   description?: string;
+  blockId?: string; // ID of the repetition block this step belongs to
 }
 
 export interface StepResult {

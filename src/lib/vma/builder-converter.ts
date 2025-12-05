@@ -7,7 +7,8 @@ import { TrainingStep } from './types';
 export function convertBuilderStepToTrainingStep(
   builderStep: BuilderStep,
   stepNumber: number,
-  repetitions: number = 1
+  repetitions: number = 1,
+  blockId?: string
 ): TrainingStep {
   return {
     id: builderStep.id,
@@ -17,7 +18,8 @@ export function convertBuilderStepToTrainingStep(
     rest: builderStep.rest || '0"',
     repetitions,
     group: builderStep.group || 'main',
-    description: builderStep.description
+    description: builderStep.description,
+    blockId
   };
 }
 
@@ -36,9 +38,9 @@ export function convertBuilderElementsToSteps(elements: TrainingElement[]): Trai
       return;
     }
 
-    // For each block, create steps with the block's repetition count
+    // For each block, create steps with the block's repetition count and blockId
     block.steps.forEach((builderStep) => {
-      const step = convertBuilderStepToTrainingStep(builderStep, stepNumber++, block.repetitions);
+      const step = convertBuilderStepToTrainingStep(builderStep, stepNumber++, block.repetitions, block.id);
       steps.push(step);
     });
   });

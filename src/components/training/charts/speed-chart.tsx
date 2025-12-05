@@ -30,18 +30,19 @@ export function SpeedChart({ program }: SpeedChartProps) {
   let cumulativeDistance = 0;
 
   // Process each step in the program and unfold repetitions
-  // Detect blocks of steps with same repetition count and alternate them
+  // Detect blocks of steps with same blockId and alternate them
   let i = 0;
   while (i < program.steps.length) {
     const currentStep = program.steps[i];
     const repetitions = currentStep.step.repetitions || 1;
+    const blockId = currentStep.step.blockId;
 
-    if (repetitions > 1) {
-      // Collect all consecutive steps with the same repetition count (same block)
+    if (repetitions > 1 && blockId) {
+      // Collect all consecutive steps with the same blockId (same block)
       const blockSteps = [currentStep];
       let j = i + 1;
 
-      while (j < program.steps.length && (program.steps[j].step.repetitions || 1) === repetitions) {
+      while (j < program.steps.length && program.steps[j].step.blockId === blockId) {
         blockSteps.push(program.steps[j]);
         j++;
       }

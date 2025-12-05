@@ -3,7 +3,6 @@ import { getGarminAuth, getFullActivity, downloadActivityGPX } from "@/actions/g
 import Link from "next/link";
 import { ActivityMap } from "./activity-map";
 import { ActivityCharts } from "./activity-charts";
-import { Header } from "@/components/header";
 import { ChevronLeft } from "lucide-react";
 
 export default async function ActivityDetailPage({
@@ -71,9 +70,7 @@ export default async function ActivityDetailPage({
   };
 
   return (
-    <>
-      <Header isAuthenticated={true} />
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="bg-white dark:bg-zinc-800 border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <Link
@@ -401,7 +398,6 @@ export default async function ActivityDetailPage({
           </div>
         )}
       </main>
-      </div>
-    </>
+    </div>
   );
 }

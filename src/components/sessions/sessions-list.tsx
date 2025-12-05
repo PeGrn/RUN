@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Mail, Trash2, Calendar, Route, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/vma/calculator';
 import { SendEmailDialog } from './send-email-dialog';
+import { DeleteSessionDialog } from './delete-session-dialog';
 import { toast } from 'sonner';
 import { deleteTrainingSession, getSessionPdfUrl } from '@/actions/training-sessions';
 
@@ -27,6 +28,8 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
   const [sessions, setSessions] = useState(initialSessions);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
 
   const handleDownload = async (session: Session) => {
     try {
@@ -64,22 +67,28 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
     setEmailDialogOpen(true);
   };
 
-  const handleDelete = async (session: Session) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${session.name}" ?`)) {
-      return;
-    }
+  const handleDelete = (session: Session) => {
+    setSessionToDelete(session);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!sessionToDelete) return;
 
     try {
-      const result = await deleteTrainingSession(session.id);
+      const result = await deleteTrainingSession(sessionToDelete.id);
 
       if (result.success) {
-        setSessions(sessions.filter(s => s.id !== session.id));
+        setSessions(sessions.filter(s => s.id !== sessionToDelete.id));
         toast.success('Séance supprimée');
       } else {
         toast.error('Erreur lors de la suppression');
       }
     } catch (error) {
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeleteDialogOpen(false);
+      setSessionToDelete(null);
     }
   };
 
@@ -182,6 +191,16 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
           open={emailDialogOpen}
           onOpenChange={setEmailDialogOpen}
           session={selectedSession}
+        />
+      )}
+
+      {/* Dialog de suppression */}
+      {sessionToDelete && (
+        <DeleteSessionDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          sessionName={sessionToDelete.name}
+          onConfirm={confirmDelete}
         />
       )}
     </>
