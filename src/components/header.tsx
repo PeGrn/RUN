@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Dumbbell, Home, LogIn, LogOut, Menu, History } from "lucide-react";
+import { Activity, Dumbbell, Home, LogIn, LogOut, Menu, History, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -70,7 +70,18 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
         </Button>
       </Link>
 
-      {isAuthenticated ? (
+      <Link href="/client" onClick={onNavigate}>
+        <Button
+          variant={isActive("/client") ? "default" : "ghost"}
+          size={mobile ? "lg" : "sm"}
+          className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Calendrier
+        </Button>
+      </Link>
+
+      {isAuthenticated && (
         <Link href="/dashboard" onClick={onNavigate}>
           <Button
             variant={
@@ -85,23 +96,12 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
             {mobile ? "Métriques Garmin" : "Métriques"}
           </Button>
         </Link>
-      ) : (
-        <Link href="/login" onClick={onNavigate}>
-          <Button
-            variant={isActive("/login") ? "default" : "ghost"}
-            size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
-          >
-            <LogIn className="h-4 w-4" />
-            Connexion Garmin
-          </Button>
-        </Link>
       )}
     </>
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -115,9 +115,9 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
             <NavLinks />
           </nav>
 
-          {/* Desktop Logout Button */}
-          {isAuthenticated ? (
-            <div className="hidden md:flex items-center gap-2">
+          {/* Desktop Auth Button */}
+          <div className="hidden md:flex items-center gap-2">
+            {isAuthenticated ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -127,12 +127,15 @@ export function Header({ isAuthenticated = false }: HeaderProps) {
                 <LogOut className="h-4 w-4 mr-2" />
                 {loading ? "Déconnexion..." : "Déconnexion"}
               </Button>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center gap-2 w-[120px]">
-              {/* Spacer pour maintenir la navigation centrée */}
-            </div>
-          )}
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" size="sm">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Connexion Garmin
+                </Button>
+              </Link>
+            )}
+          </div>
 
           {/* Mobile Menu */}
           <Sheet>

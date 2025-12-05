@@ -19,10 +19,12 @@ model TrainingSession {
   totalDistance Float  // en mètres
   totalTime     Int    // en secondes
   steps         Json   // Stocker les étapes en JSON
+  sessionDate DateTime? // Date prévue de la séance (optionnel)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String?  // Pour plus tard si authentification
 
   @@index([createdAt])
+  @@index([sessionDate])
   @@map("training_sessions")
 }

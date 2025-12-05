@@ -23,10 +23,14 @@ export async function createTrainingSession(formData: FormData) {
     const vma = parseFloat(formData.get('vma') as string);
     const totalDistance = parseFloat(formData.get('totalDistance') as string);
     const totalTime = parseFloat(formData.get('totalTime') as string);
-    
+
     // Parsing du JSON pour les étapes
     const stepsJson = formData.get('steps') as string;
     const steps = stepsJson ? JSON.parse(stepsJson) : [];
+
+    // Parsing de la date (optionnel)
+    const sessionDateStr = formData.get('sessionDate') as string | null;
+    const sessionDate = sessionDateStr ? new Date(sessionDateStr) : null;
 
     const file = formData.get('file') as File;
     
@@ -52,6 +56,7 @@ export async function createTrainingSession(formData: FormData) {
         steps,
         pdfUrl: uploadResult.url,
         pdfKey: uploadResult.key,
+        sessionDate,
       },
     });
 
@@ -67,6 +72,11 @@ export async function createTrainingSession(formData: FormData) {
  */
 export async function getSessionPdfBuffer(sessionId: string): Promise<Buffer | null> {
   try {
+    // Validation de l'ID
+    if (!sessionId || typeof sessionId !== 'string') {
+      return null;
+    }
+
     const session = await prisma.trainingSession.findUnique({
       where: { id: sessionId },
       select: { pdfKey: true },
@@ -89,6 +99,11 @@ export async function getSessionPdfBuffer(sessionId: string): Promise<Buffer | n
  */
 export async function getSessionPdfUrl(sessionId: string) {
   try {
+    // Validation de l'ID
+    if (!sessionId || typeof sessionId !== 'string') {
+      return { success: false, error: 'Invalid session ID' };
+    }
+
     const session = await prisma.trainingSession.findUnique({
       where: { id: sessionId },
       select: { pdfKey: true, pdfUrl: true },
@@ -117,6 +132,11 @@ export async function getSessionPdfUrl(sessionId: string) {
  */
 export async function deleteTrainingSession(id: string) {
   try {
+    // Validation de l'ID
+    if (!id || typeof id !== 'string') {
+      return { success: false, error: 'Invalid session ID' };
+    }
+
     await prisma.trainingSession.delete({
       where: { id },
     });
@@ -147,12 +167,105 @@ export async function getTrainingSessions() {
  */
 export async function getTrainingSessionById(id: string) {
   try {
+    // Validation de l'ID
+    if (!id || typeof id !== 'string') {
+      return { success: false, error: 'Invalid session ID' };
+    }
+
     const session = await prisma.trainingSession.findUnique({
       where: { id },
     });
+
+    if (!session) {
+      return { success: false, error: 'Session not found' };
+    }
+
     return { success: true, session };
   } catch (error) {
     console.error('Error getting training session:', error);
     return { success: false, error: 'Failed to get training session' };
+  }
+}
+
+/**
+ * Récupère toutes les dates qui ont au moins une séance
+ * Retourne un tableau de dates (format ISO) pour afficher les dots sur le calendrier
+ */
+export async function getSessionDates(year: number, month: number) {
+  try {
+    // Validation des paramètres
+    if (!year || !month || year < 2000 || year > 2100 || month < 1 || month > 12) {
+      return { success: false, error: 'Invalid date parameters' };
+    }
+
+    // Calculer le premier et dernier jour du mois
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const sessions = await prisma.trainingSession.findMany({
+      where: {
+        sessionDate: {
+          gte: startDate,
+          lte: endDate,
+          not: null, // Optimisation : exclure les null directement dans la query
+        },
+      },
+      select: {
+        sessionDate: true,
+      },
+    });
+
+    // Extraire les dates uniques en utilisant la timezone locale au lieu de UTC
+    const dates = sessions.map((s) => {
+      const date = s.sessionDate!;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    });
+
+    // Retourner les dates uniques
+    const uniqueDates = [...new Set(dates)];
+
+    return { success: true, dates: uniqueDates };
+  } catch (error) {
+    console.error('Error getting session dates:', error);
+    return { success: false, error: 'Failed to get session dates' };
+  }
+}
+
+/**
+ * Récupère toutes les séances pour une date spécifique
+ */
+export async function getSessionsByDate(date: string) {
+  try {
+    // Parser la date au format YYYY-MM-DD
+    const [year, month, day] = date.split('-').map(Number);
+
+    // Validation de la date
+    if (!year || !month || !day || month < 1 || month > 12 || day < 1 || day > 31) {
+      return { success: false, error: 'Invalid date format' };
+    }
+
+    // Créer les dates de début et fin du jour en timezone locale
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    const sessions = await prisma.trainingSession.findMany({
+      where: {
+        sessionDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return { success: true, sessions };
+  } catch (error) {
+    console.error('Error getting sessions by date:', error);
+    return { success: false, error: 'Failed to get sessions by date' };
   }
 }

@@ -13,12 +13,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Mail } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Save, Mail, Calendar as CalendarIcon } from 'lucide-react';
 import { createTrainingSession } from '@/actions/training-sessions';
 import { sendPdfEmail } from '@/actions/email';
 import { generatePDFBuffer } from '@/lib/pdf-export';
 import { TrainingElement } from '@/lib/vma';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface SavePdfDialogProps {
   open: boolean;
@@ -40,22 +45,28 @@ export function SavePdfDialog({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
+  const [sessionDate, setSessionDate] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'save' | 'email' | null>(null);
 
   // Fonction utilitaire pour préparer le FormData
   const prepareFormData = (pdfBlob: Blob, fileName: string) => {
     const formData = new FormData();
-    
+
     formData.append('name', name);
     formData.append('description', description);
     formData.append('vma', vma.toString());
     formData.append('totalDistance', totalDistance.toString());
     formData.append('totalTime', totalTime.toString());
-    
+
+    // Ajouter la date si elle est définie
+    if (sessionDate) {
+      formData.append('sessionDate', sessionDate.toISOString());
+    }
+
     // Important : On stringify le tableau d'objets pour le passer dans le FormData
     formData.append('steps', JSON.stringify(builderElements));
-    
+
     // Création d'un objet File à partir du Blob du PDF
     const file = new File([pdfBlob], `${fileName}.pdf`, { type: 'application/pdf' });
     formData.append('file', file);
@@ -66,6 +77,11 @@ export function SavePdfDialog({
   const handleSave = async () => {
     if (!name.trim()) {
       toast.error('Veuillez entrer un nom pour la séance');
+      return;
+    }
+
+    if (!sessionDate) {
+      toast.error('Veuillez sélectionner une date pour la séance');
       return;
     }
 
@@ -87,6 +103,7 @@ export function SavePdfDialog({
         toast.success('Séance sauvegardée avec succès');
         setName('');
         setDescription('');
+        setSessionDate(undefined);
         onOpenChange(false);
       } else {
         toast.error('Erreur lors de la sauvegarde');
@@ -102,6 +119,11 @@ export function SavePdfDialog({
   const handleSaveAndSend = async () => {
     if (!name.trim()) {
       toast.error('Veuillez entrer un nom pour la séance');
+      return;
+    }
+
+    if (!sessionDate) {
+      toast.error('Veuillez sélectionner une date pour la séance');
       return;
     }
 
@@ -146,6 +168,7 @@ export function SavePdfDialog({
         toast.success(`Séance sauvegardée et envoyée à ${email}`);
         setName('');
         setDescription('');
+        setSessionDate(undefined);
         setEmail('');
         onOpenChange(false);
       } else {
@@ -249,6 +272,37 @@ export function SavePdfDialog({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Date de la séance *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !sessionDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {sessionDate ? (
+                    format(sessionDate, "PPP", { locale: fr })
+                  ) : (
+                    <span>Sélectionner une date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={sessionDate}
+                  onSelect={setSessionDate}
+                  initialFocus
+                  locale={fr}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {mode === 'email' && (

@@ -1,10 +1,7 @@
-import { getTrainingSessions } from '@/actions/training-sessions';
-import { SessionsList } from '@/components/sessions/sessions-list';
-import { History, Sparkles } from 'lucide-react';
+import { ClientCalendar } from '@/components/client/client-calendar';
+import { CalendarDays } from 'lucide-react';
 
-export default async function SessionsPage() {
-  const { sessions } = await getTrainingSessions();
-
+export default function ClientPage() {
   return (
     <>
       {/* Hero Section */}
@@ -12,16 +9,16 @@ export default async function SessionsPage() {
         <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-3">
-              <History className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
-                Historique des Séances
+                Calendrier des Entraînements
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
-              Mes Programmes VMA
+              Mes Séances
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-              Retrouvez tous vos programmes d'entraînement sauvegardés
+              Consultez et téléchargez vos programmes d&apos;entraînement planifiés
             </p>
           </div>
         </div>
@@ -29,7 +26,7 @@ export default async function SessionsPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 sm:py-8">
-        <SessionsList sessions={sessions || []} />
+        <ClientCalendar />
       </div>
     </>
   );
