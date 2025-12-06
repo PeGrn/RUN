@@ -25,7 +25,7 @@ export default function PlanningPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="container mx-auto px-0 sm:px-4 py-6 sm:py-8">
         <PlanningCalendar />
       </div>
     </>

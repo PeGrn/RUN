@@ -89,9 +89,9 @@ export function PlanningCalendar() {
   };
 
   return (
-    <div className="flex justify-center">
-      <Card className="p-4 sm:p-6 max-w-md w-full">
-        <div className="relative">
+    <div className="w-full sm:flex sm:justify-center">
+      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+        <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
               <div className="text-sm text-muted-foreground">Chargement...</div>
@@ -106,7 +106,7 @@ export function PlanningCalendar() {
             locale={fr}
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
-            className="rounded-md"
+            className="w-full"
             disabled={loading}
           />
         </div>

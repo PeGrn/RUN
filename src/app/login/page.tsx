@@ -1,8 +1,17 @@
 import { getGarminAuth } from "@/actions/garmin";
 import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/auth";
 import LoginForm from "./login-form";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LoginPage() {
+  // Vérifier que l'utilisateur est admin
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
+    redirect("/planning");
+  }
+
   const auth = await getGarminAuth();
 
   if (auth.isAuthenticated) {

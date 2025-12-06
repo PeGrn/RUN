@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getGarminAuth } from "@/actions/garmin";
-import { Activity, Dumbbell, ArrowRight } from "lucide-react";
+import { Dumbbell, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/card";
 
 export default async function Home() {
-  const auth = await getGarminAuth();
 
   return (
     <main className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-8 sm:p-8">
@@ -26,8 +24,8 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-8 sm:mt-12">
-            <Card className="group hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary active:scale-[0.98]">
+          <div className="flex justify-center mt-8 sm:mt-12">
+            <Card className="group hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary active:scale-[0.98] max-w-2xl w-full">
               <Link href="/training" className="block h-full">
                 <CardHeader className="space-y-3 pb-4">
                   <div className="flex items-center gap-3">
@@ -53,41 +51,6 @@ export default async function Home() {
                   </div>
                   <Button className="w-full group-hover:translate-x-1 transition-transform mt-4">
                     Commencer
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Link>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary active:scale-[0.98]">
-              <Link
-                href={auth.isAuthenticated ? "/dashboard" : "/login"}
-                className="block h-full"
-              >
-                <CardHeader className="space-y-3 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 sm:p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                      <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl sm:text-2xl">
-                      Métriques Garmin
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3 sm:space-y-4">
-                  <CardDescription className="text-sm sm:text-base leading-relaxed">
-                    {auth.isAuthenticated
-                      ? "Accédez à vos données Garmin : activités, métriques, cartes et analyses détaillées de vos performances."
-                      : "Connectez-vous à votre compte Garmin pour accéder à vos activités, métriques et analyses détaillées."}
-                  </CardDescription>
-                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
-                    <p>• Activités et historique complet</p>
-                    <p>• Cartes et itinéraires détaillés</p>
-                    <p>• Métriques de performance</p>
-                    <p>• Stress et récupération</p>
-                  </div>
-                  <Button className="w-full group-hover:translate-x-1 transition-transform mt-4">
-                    {auth.isAuthenticated ? "Voir le dashboard" : "Se connecter"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>

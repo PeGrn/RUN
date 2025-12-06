@@ -6,10 +6,19 @@ import {
   getDailySteps,
   getDailyStress,
 } from "@/actions/garmin";
+import { isAdmin } from "@/lib/auth";
 import Link from "next/link";
 import LogoutButton from "./logout-button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
+  // Vérifier que l'utilisateur est admin
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
+    redirect("/planning");
+  }
+
   const auth = await getGarminAuth();
 
   if (!auth.isAuthenticated) {
