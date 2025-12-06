@@ -185,7 +185,12 @@ function CalendarDayButton({
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {
-    if (modifiers.focused) ref.current?.focus()
+    // Désactiver le focus automatique sur les appareils tactiles pour éviter
+    // le scroll indésirable et l'espace blanc sur mobile
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    if (modifiers.focused && !isTouchDevice) {
+      ref.current?.focus()
+    }
   }, [modifiers.focused])
 
   return (

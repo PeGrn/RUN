@@ -14,11 +14,8 @@ export default function PlanningPage() {
                 Calendrier des Entraînements
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
-              Mes Séances
-            </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-              Consultez et téléchargez vos programmes d&apos;entraînement planifiés
+              Consultez et téléchargez les séances d&apos;entraînement planifiées
             </p>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Activity, Dumbbell, Home, Menu, History, CalendarDays, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { UserButton, useUser } from "@clerk/nextjs";
 import type { UserRole, UserStatus } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 export function HeaderClerk() {
   const pathname = usePathname();
@@ -38,9 +40,12 @@ export function HeaderClerk() {
     <>
       <Link href="/" onClick={onNavigate}>
         <Button
-          variant={isActive("/") ? "default" : "ghost"}
+          variant={isActive("/") ? "secondary" : "ghost"}
           size={mobile ? "lg" : "sm"}
-          className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+          className={cn(
+            mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+            isActive("/") && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+          )}
         >
           <Home className="h-4 w-4" />
           Accueil
@@ -51,9 +56,12 @@ export function HeaderClerk() {
       {status === 'approved' && (
         <Link href="/planning" onClick={onNavigate}>
           <Button
-            variant={isActive("/planning") ? "default" : "ghost"}
+            variant={isActive("/planning") ? "secondary" : "ghost"}
             size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+            className={cn(
+              mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+              isActive("/planning") && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+            )}
           >
             <CalendarDays className="h-4 w-4" />
             Planning
@@ -65,9 +73,12 @@ export function HeaderClerk() {
       {status === 'approved' && (
         <Link href="/training" onClick={onNavigate}>
           <Button
-            variant={isActive("/training") ? "default" : "ghost"}
+            variant={isActive("/training") ? "secondary" : "ghost"}
             size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+            className={cn(
+              mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+              isActive("/training") && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+            )}
           >
             <Dumbbell className="h-4 w-4" />
             {mobile ? "Créer un entraînement" : "Entraînement"}
@@ -79,9 +90,12 @@ export function HeaderClerk() {
       {status === 'approved' && (role === 'coach' || role === 'admin') && (
         <Link href="/sessions" onClick={onNavigate}>
           <Button
-            variant={isActive("/sessions") ? "default" : "ghost"}
+            variant={isActive("/sessions") ? "secondary" : "ghost"}
             size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+            className={cn(
+              mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+              isActive("/sessions") && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+            )}
           >
             <History className="h-4 w-4" />
             Historique
@@ -93,13 +107,12 @@ export function HeaderClerk() {
       {status === 'approved' && isGarminAuthenticated && (
         <Link href="/dashboard" onClick={onNavigate}>
           <Button
-            variant={
-              isActive("/dashboard") || pathname.startsWith("/activity")
-                ? "default"
-                : "ghost"
-            }
+            variant={isActive("/dashboard") || pathname.startsWith("/activity") ? "secondary" : "ghost"}
             size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+            className={cn(
+              mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+              (isActive("/dashboard") || pathname.startsWith("/activity")) && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+            )}
           >
             <Activity className="h-4 w-4" />
             {mobile ? "Métriques Garmin" : "Métriques"}
@@ -111,9 +124,12 @@ export function HeaderClerk() {
       {status === 'approved' && (role === 'coach' || role === 'admin') && (
         <Link href="/admin" onClick={onNavigate}>
           <Button
-            variant={isActive("/admin") ? "default" : "ghost"}
+            variant={isActive("/admin") ? "secondary" : "ghost"}
             size={mobile ? "lg" : "sm"}
-            className={mobile ? "w-full justify-start gap-3" : "gap-2"}
+            className={cn(
+              mobile ? "w-full justify-start gap-3 text-base" : "gap-2 text-sm font-medium",
+              isActive("/admin") && !mobile && "bg-secondary/50 text-secondary-foreground shadow-sm"
+            )}
           >
             <Shield className="h-4 w-4" />
             {mobile ? "Administration" : "Admin"}
@@ -124,49 +140,83 @@ export function HeaderClerk() {
   );
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="font-bold text-base sm:text-lg">Running Data</span>
+          
+          {/* Logo & Brand */}
+          <Link href="/" className="group flex items-center gap-3 flex-shrink-0 transition-opacity hover:opacity-90">
+            <div className="relative h-10 w-10 sm:h-12 sm:w-12 transition-transform duration-300 group-hover:scale-105">
+               <Image 
+                 src="/LOGO_ASUL_BRON.png" 
+                 alt="Logo ASUL Bron" 
+                 fill
+                 className="object-contain"
+                 priority
+               />
+            </div>
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+              ESL Team
+            </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Navigation - Pill Shape */}
+          <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
             <NavLinks />
           </nav>
 
           {/* Desktop User Button */}
           <div className="hidden md:flex items-center gap-2">
-            <UserButton afterSignOutUrl="/" />
+            <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                    elements: {
+                        avatarBox: "h-9 w-9 border border-border"
+                    }
+                }}
+            />
           </div>
 
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="flex-shrink-0">
-                <Menu className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="flex-shrink-0 -mr-2">
+                <Menu className="h-6 w-6" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Running Data
+            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl">
+              <SheetHeader className="border-b border-border/50 pb-6 mb-6">
+                <SheetTitle className="flex items-center gap-3">
+                   <div className="relative h-8 w-8">
+                    <Image 
+                        src="/LOGO_ASUL_BRON.png" 
+                        alt="Logo" 
+                        fill
+                        className="object-contain"
+                    />
+                  </div>
+                  <span className="font-bold text-xl tracking-tight">ESL Team</span>
                 </SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col gap-2 mt-8">
+              <nav className="flex flex-col gap-2">
                 <SheetClose asChild>
                   <div className="flex flex-col gap-2">
                     <NavLinks mobile onNavigate={() => {}} />
                   </div>
                 </SheetClose>
 
-                <div className="pt-4 mt-4 border-t flex justify-center">
-                  <UserButton afterSignOutUrl="/" />
+                <div className="pt-6 mt-6 border-t border-border/50 flex justify-center">
+                  <UserButton 
+                    afterSignOutUrl="/" 
+                    showName={true}
+                    appearance={{
+                        elements: {
+                            userButtonBox: "flex flex-row-reverse gap-2",
+                            userButtonOuterIdentifier: "font-medium"
+                        }
+                    }}
+                  />
                 </div>
               </nav>
             </SheetContent>

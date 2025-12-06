@@ -58,6 +58,10 @@ export function PlanningCalendar() {
     const dateStr = formatDateLocal(date);
 
     if (!sessionDates.includes(dateStr)) {
+      // Retirer le focus de l'élément actif sur mobile pour éviter le scroll indésirable
+      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        (document.activeElement as HTMLElement)?.blur();
+      }
       return; // Pas de séances pour ce jour
     }
 
