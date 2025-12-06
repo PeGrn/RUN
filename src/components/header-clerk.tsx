@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Activity, Dumbbell, Home, Menu, History, CalendarDays, Shield } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { 
+  Activity, 
+  Dumbbell, 
+  Home, 
+  Menu, 
+  History, 
+  CalendarDays, 
+  Shield, 
+  LogOut, 
+  User as UserIcon 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,12 +22,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser, useClerk } from "@clerk/nextjs";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-// --- 1. NavLinks est défini à l'extérieur pour la performance et éviter les erreurs ---
+// --- 1. NavLinks ---
 interface NavLinksProps {
   mobile?: boolean;
   onNavigate?: () => void;
@@ -34,7 +44,6 @@ const NavLinks = ({
   isGarminAuthenticated 
 }: NavLinksProps) => {
   const pathname = usePathname();
-
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -139,6 +148,8 @@ const NavLinks = ({
 // --- Composant Principal ---
 export function HeaderClerk() {
   const { user } = useUser();
+  const { signOut } = useClerk();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
   // Récupérer les métadonnées de l'utilisateur
@@ -149,6 +160,13 @@ export function HeaderClerk() {
   const role = isAdminUser ? 'admin' : (metadata.role || 'athlete');
   const status = isAdminUser ? 'approved' : (metadata.status || 'pending');
   const isGarminAuthenticated = user?.publicMetadata?.garminAuthenticated === true;
+
+  // Fonction de déconnexion personnalisée
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+    setIsOpen(false);
+  };
 
   return (
     <header className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
@@ -170,6 +188,7 @@ export function HeaderClerk() {
             </span>
           </Link>
 
+          {/* Navigation Desktop */}
           <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
             <NavLinks 
               role={role} 
@@ -178,9 +197,12 @@ export function HeaderClerk() {
             />
           </nav>
 
+          {/* UserButton Desktop */}
           <div className="hidden md:flex items-center gap-2">
             <UserButton 
                 afterSignOutUrl="/"
+                userProfileMode="navigation"
+                userProfileUrl="/user-profile"
                 appearance={{
                     elements: {
                         avatarBox: "h-9 w-9 border border-border"
@@ -189,6 +211,7 @@ export function HeaderClerk() {
             />
           </div>
 
+          {/* Menu Mobile */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" className="flex-shrink-0 -mr-2">
@@ -196,7 +219,7 @@ export function HeaderClerk() {
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl pt-18">
+            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl pt-18 overflow-y-auto">
               <SheetHeader className="border-b border-border/50 pb-6 mb-6">
                 <SheetTitle className="flex items-center gap-3">
                    <div className="relative h-8 w-8">
@@ -211,28 +234,51 @@ export function HeaderClerk() {
                 </SheetTitle>
               </SheetHeader>
               
-              <nav className="flex flex-col gap-2">
-                 <div className="flex flex-col gap-2">
-                   <NavLinks 
-                     mobile 
-                     onNavigate={() => setIsOpen(false)} 
-                     role={role}
-                     status={status}
-                     isGarminAuthenticated={isGarminAuthenticated}
-                   />
-                 </div>
+              {/* MODIFICATION: Retrait de h-full ici */}
+              <nav className="flex flex-col gap-6"> 
+                  <div className="flex flex-col gap-2">
+                    <NavLinks 
+                      mobile 
+                      onNavigate={() => setIsOpen(false)} 
+                      role={role}
+                      status={status}
+                      isGarminAuthenticated={isGarminAuthenticated}
+                    />
+                  </div>
 
-                <div className="pt-6 mt-6 border-t border-border/50 flex justify-center">
-                  <UserButton 
-                    afterSignOutUrl="/" 
-                    showName={true}
-                    appearance={{
-                        elements: {
-                            userButtonBox: "flex flex-row-reverse gap-2",
-                            userButtonOuterIdentifier: "font-medium"
-                        }
-                    }}
-                  />
+                {/* MODIFICATION: Retrait de mt-auto, ajout de pt-4 pour l'espacement direct */}
+                <div className="pt-4 border-t border-border/50 flex flex-col gap-4">
+                  {user && (
+                    <div className="flex flex-col gap-3">
+                        <Link 
+                            href="/user-profile" 
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/50 transition-colors"
+                        >
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden border border-border">
+                                <Image 
+                                    src={user.imageUrl} 
+                                    alt="Profile" 
+                                    fill 
+                                    className="object-cover"
+                                />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <span className="text-sm font-medium">{user.fullName || user.username}</span>
+                                <span className="text-xs text-muted-foreground">Gérer mon compte</span>
+                            </div>
+                        </Link>
+                        
+                        <Button 
+                            variant="outline" 
+                            className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={handleSignOut}
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Se déconnecter
+                        </Button>
+                    </div>
+                  )}
                 </div>
               </nav>
             </SheetContent>
