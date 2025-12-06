@@ -113,6 +113,7 @@ export function SessionDrawer({
   // Gérer l'envoi par email
   const handleSendEmail = useCallback(async (sessionId: string, sessionName: string) => {
     const userEmail = user?.emailAddresses[0]?.emailAddress;
+    const userName = user?.firstName || user?.lastName || 'Athlète';
 
     if (!userEmail) {
       toast.error('Email non disponible');
@@ -125,6 +126,8 @@ export function SessionDrawer({
         sessionId,
         sessionName,
         toEmail: userEmail,
+        userName,
+        sessionDate: selectedDate, // Date sélectionnée dans le calendrier
       });
 
       if (result.success) {
@@ -138,7 +141,7 @@ export function SessionDrawer({
     } finally {
       setSending(false);
     }
-  }, [user]);
+  }, [user, selectedDate]);
 
   // Vue : Chargement
   if (loading) {

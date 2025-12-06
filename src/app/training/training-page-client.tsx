@@ -113,7 +113,7 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
-                Entraînement VMA by Coach Javier 🏃‍♂️💨
+                Création de Séances d&apos;Entraînement
               </span>
             </div>
           </div>
@@ -152,15 +152,6 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
                   Planifier & Sauvegarder
                 </Button>
               )}
-            </div>
-
-            {/* Info Card */}
-            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2 text-sm">
-              <h3 className="font-semibold">💡 Conseil</h3>
-              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
-                La VMA (Vitesse Maximale Aérobie) est votre vitesse de course maximale que vous
-                pouvez maintenir pendant 4 à 6 minutes.
-              </p>
             </div>
           </div>
 

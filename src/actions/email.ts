@@ -49,7 +49,7 @@ export async function sendSessionEmail(input: SendSessionEmailInput) {
     }
 
     const formattedDate = formatDate(input.sessionDate);
-    const userNameDisplay = input.userName ? input.userName : "";
+    const userNameDisplay = input.userName || '';
 
     // Envoyer l'email via Resend
     const { data, error } = await resend.emails.send({
@@ -58,13 +58,13 @@ export async function sendSessionEmail(input: SendSessionEmailInput) {
       subject: `Votre séance : ${input.sessionName}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-          
+
           <div style="text-align: center; padding-bottom: 20px;">
             <h1 style="color: #000; font-size: 24px; font-weight: bold; margin: 0;">ESL Team</h1>
           </div>
 
           <div style="background-color: #f9fafb; padding: 32px; border-radius: 12px; border: 1px solid #e5e7eb;">
-            
+
             <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 24px;">
               Bonjour ${userNameDisplay},
             </h2>

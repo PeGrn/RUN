@@ -417,7 +417,7 @@ export function RepetitionBlockRow({
             <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-primary/20" />
               <span className="font-medium whitespace-nowrap">
-                Fin ({block.repetitions}× {safeSteps.length})
+                Fin de {block.repetitions} x {safeSteps.map(step => step.distance).join(' - ')}
               </span>
               <div className="h-px flex-1 bg-primary/20" />
             </div>

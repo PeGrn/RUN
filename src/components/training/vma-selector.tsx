@@ -28,16 +28,6 @@ export function VMASelector({
     onChange(newValue);
   };
 
-  const getVMALevel = (vma: number): { label: string; color: string } => {
-    if (vma < 14) return { label: 'Débutant', color: 'bg-red-500' };
-    if (vma < 16) return { label: 'Intermédiaire', color: 'bg-yellow-500' };
-    if (vma < 18) return { label: 'Confirmé', color: 'bg-blue-500' };
-    if (vma < 20) return { label: 'Avancé', color: 'bg-green-500' };
-    return { label: 'Expert', color: 'bg-purple-500' };
-  };
-
-  const level = getVMALevel(localValue);
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6">
@@ -61,9 +51,6 @@ export function VMASelector({
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">km/h</div>
             </div>
-            <Badge className={`${level.color} text-white border-0 text-xs sm:text-sm`}>
-              {level.label}
-            </Badge>
           </div>
 
           {/* Slider */}

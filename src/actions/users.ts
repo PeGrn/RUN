@@ -130,7 +130,7 @@ export async function approveUser(userId: string) {
 
     // Envoyer un email de confirmation
     const userEmail = user.emailAddresses[0]?.emailAddress;
-    const userName = user.firstName || 'Athlète';
+    const userName = user.firstName || '';
     const loginUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     if (userEmail && process.env.RESEND_API_KEY) {
