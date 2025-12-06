@@ -88,20 +88,23 @@ export function PlanningCalendar() {
   const handleDateClick = async (date: Date | undefined) => {
     if (!date) return;
 
+    // Vérifier si cette date a des séances AVANT de sélectionner
+    // Utiliser la timezone locale au lieu de UTC pour éviter les décalages
+    const dateStr = formatDateLocal(date);
+
+    if (!sessionDates.includes(dateStr)) {
+      // Ne pas sélectionner la date s'il n'y a pas de séance
+      // Cela évite le changement d'état visuel qui cause le scroll sur mobile
+      return;
+    }
+
     // Retirer immédiatement le focus sur mobile pour éviter tout comportement indésirable
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
 
+    // Ne sélectionner que les dates avec des séances
     setSelectedDate(date);
-
-    // Vérifier si cette date a des séances
-    // Utiliser la timezone locale au lieu de UTC pour éviter les décalages
-    const dateStr = formatDateLocal(date);
-
-    if (!sessionDates.includes(dateStr)) {
-      return; // Pas de séances pour ce jour
-    }
 
     // Charger les séances pour cette date
     setLoading(true);

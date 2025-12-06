@@ -39,16 +39,9 @@ export default async function Home() {
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
                   <CardDescription className="text-sm sm:text-base leading-relaxed">
-                    Construisez des plans d'entraînement VMA personnalisés avec
-                    notre outil intuitif de glisser-déposer. Exportez-les en PDF
-                    pour les utiliser lors de vos séances.
+                    Construction du plans d&apos;entraînement. Exportation en PDF
+                    pour les utiliser lors des séances.
                   </CardDescription>
-                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
-                    <p>• Calcul automatique des allures VMA</p>
-                    <p>• Interface drag & drop intuitive</p>
-                    <p>• Export PDF pour vos entraînements</p>
-                    <p>• Visualisation graphique des séances</p>
-                  </div>
                   <Button className="w-full group-hover:translate-x-1 transition-transform mt-4">
                     Commencer
                     <ArrowRight className="ml-2 h-4 w-4" />
