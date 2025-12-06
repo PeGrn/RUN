@@ -196,10 +196,6 @@ export function HeaderClerk() {
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            {/* 
-                2. AJOUT DE LA CLASSE 'pt-16' ICI 
-                Cela pousse le contenu vers le bas pour ne pas être caché par le header fixe.
-            */}
             <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl pt-18">
               <SheetHeader className="border-b border-border/50 pb-6 mb-6">
                 <SheetTitle className="flex items-center gap-3">
