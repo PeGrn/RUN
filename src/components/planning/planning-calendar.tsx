@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { getSessionDates, getSessionsByDate } from '@/actions/training-sessions';
+import { getPlanningData } from '@/actions/planning';
+import { getSessionsByDate } from '@/actions/training-sessions';
+import { getEventsByDate } from '@/actions/events';
 import { SessionDrawer } from './session-drawer';
 import { Card } from '@/components/ui/card';
 import { fr } from 'date-fns/locale';
-import type { TrainingSession } from '@prisma/client';
+import type { TrainingSession, Event } from '@prisma/client';
 
 // Fonction helper pour normaliser une date en format YYYY-MM-DD sans timezone
 const formatDateLocal = (date: Date): string => {
@@ -19,81 +21,106 @@ const formatDateLocal = (date: Date): string => {
 export function PlanningCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  
+  // États pour les dates marquées
   const [sessionDates, setSessionDates] = useState<string[]>([]);
+  const [eventDates, setEventDates] = useState<string[]>([]);
+  
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  // Données détaillées pour le Drawer
   const [sessionsForDate, setSessionsForDate] = useState<TrainingSession[]>([]);
+  const [eventsForDate, setEventsForDate] = useState<Event[]>([]);
+  
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
 
-  // Charger les dates avec des séances quand le mois change
-  const loadSessionDates = useCallback(async () => {
+  // Charger les dates (Séances + Événements) quand le mois change
+  const loadPlanning = useCallback(async () => {
     setLoadingDates(true);
     try {
       const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth() + 1; // JavaScript months are 0-indexed
+      const month = currentMonth.getMonth() + 1;
 
-      const result = await getSessionDates(year, month);
-      if (result.success && result.dates) {
-        setSessionDates(result.dates);
+      // On utilise l'action unifiée
+      const result = await getPlanningData(year, month);
+      
+      if (result.success) {
+        setSessionDates(result.sessionDates || []);
+        setEventDates(result.eventDates || []);
       }
     } catch (error) {
-      console.error('Error loading session dates:', error);
+      console.error('Error loading planning dates:', error);
     } finally {
       setLoadingDates(false);
     }
   }, [currentMonth]);
 
   useEffect(() => {
-    loadSessionDates();
-  }, [loadSessionDates]);
+    loadPlanning();
+  }, [loadPlanning]);
 
   // Gérer le clic sur une date
   const handleDateClick = useCallback(async (date: Date | undefined) => {
     if (!date) return;
 
-    // Vérifier si cette date a des séances AVANT de sélectionner
-    // Utiliser la timezone locale au lieu de UTC pour éviter les décalages
     const dateStr = formatDateLocal(date);
+    const hasSession = sessionDates.includes(dateStr);
+    const hasEvent = eventDates.includes(dateStr);
 
-    if (!sessionDates.includes(dateStr)) {
-      // Ne pas sélectionner la date s'il n'y a pas de séance
-      // Cela évite le changement d'état visuel qui cause le scroll sur mobile
+    // Ne rien faire s'il n'y a rien sur cette date
+    if (!hasSession && !hasEvent) {
       return;
     }
 
-    // Retirer immédiatement le focus sur mobile pour éviter tout comportement indésirable
+    // Retirer le focus sur mobile pour éviter le clavier virtuel ou zoom
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
 
-    // Ne sélectionner que les dates avec des séances
     setSelectedDate(date);
-
-    // Charger les séances pour cette date
     setLoading(true);
+
     try {
-      const result = await getSessionsByDate(dateStr);
-      if (result.success && result.sessions) {
-        setSessionsForDate(result.sessions);
-        setDrawerOpen(true);
-      }
+      // --- CORRECTION TYPE SCRIPT ---
+      // On sépare bien les promesses pour que TS sache qui est qui.
+      
+      // 1. Promesse pour les SÉANCES
+      const sessionPromise = hasSession 
+        ? getSessionsByDate(dateStr) 
+        : Promise.resolve({ success: true, sessions: [] as TrainingSession[] });
+
+      // 2. Promesse pour les ÉVÉNEMENTS
+      const eventPromise = hasEvent 
+        ? getEventsByDate(dateStr) 
+        : Promise.resolve({ success: true, events: [] as Event[] });
+
+      // 3. Exécution parallèle avec typage strict du tuple de retour
+      const [sessionResult, eventResult] = await Promise.all([sessionPromise, eventPromise]);
+
+      // Maintenant TS sait que sessionResult a .sessions et eventResult a .events
+      setSessionsForDate(sessionResult.sessions || []);
+      setEventsForDate(eventResult.events || []);
+      
+      setDrawerOpen(true);
     } catch (error) {
-      console.error('Error loading sessions:', error);
+      console.error('Error loading details:', error);
     } finally {
       setLoading(false);
     }
-  }, [sessionDates]);
+  }, [sessionDates, eventDates]);
 
-  // Fonction pour personnaliser l'affichage des jours avec des dots
+  // Configuration des indicateurs visuels
   const modifiers = useMemo(() => ({
-    hasSession: (date: Date) => {
-      const dateStr = formatDateLocal(date);
-      return sessionDates.includes(dateStr);
-    },
-  }), [sessionDates]);
+    hasSession: (date: Date) => sessionDates.includes(formatDateLocal(date)),
+    hasEvent: (date: Date) => eventDates.includes(formatDateLocal(date)),
+  }), [sessionDates, eventDates]);
 
   const modifiersClassNames = useMemo(() => ({
+    // Point Bleu (Séance) : Centré en bas
     hasSession: 'relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full',
+    // Point Orange (Événement) : Coin haut droit
+    hasEvent: 'relative before:absolute before:top-1 before:right-1 before:w-1.5 before:h-1.5 before:bg-orange-500 before:rounded-full',
   }), []);
 
   return (
@@ -118,12 +145,25 @@ export function PlanningCalendar() {
             disabled={loading}
           />
         </div>
+        
+        {/* Légende rapide */}
+        <div className="mt-4 flex justify-center gap-6 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span>Séance</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-orange-500" />
+            <span>Événement</span>
+          </div>
+        </div>
       </Card>
 
       <SessionDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         sessions={sessionsForDate}
+        events={eventsForDate}
         selectedDate={selectedDate}
         loading={loading}
       />

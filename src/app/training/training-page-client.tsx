@@ -5,12 +5,13 @@ import { VMASelector, TrainingPlanDisplay } from '@/components/training';
 import { TrainingBuilder } from '@/components/training/builder';
 import { SpeedChart } from '@/components/training/charts';
 import { SavePdfDialog } from '@/components/training/save-pdf-dialog';
+import { CreateEventDialog } from '@/components/training/create-event-dialog'; // Import ajouté
 import { calculateVMAProgram, TrainingElement, convertBuilderElementsToSteps } from '@/lib/vma';
 import { generatePDF } from '@/lib/pdf-export';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Download, Edit, Eye, BarChart3, Save } from 'lucide-react';
+import { Sparkles, Download, Edit, Eye, BarChart3, Save, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import type { UserRole } from '@/lib/auth';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -25,7 +26,10 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
   const router = useRouter();
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
+  
+  // États pour les dialogues
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false); // Nouvel état pour l'événement
 
   // Handle duplication from query param
   useEffect(() => {
@@ -139,18 +143,31 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
                 <Download className="h-4 w-4 mr-2" />
                 Télécharger PDF
               </Button>
-              {/* Bouton Sauvegarder - uniquement pour les coachs et admins */}
+              
+              {/* Boutons réservés aux Coachs et Admins */}
               {(userRole === 'coach' || userRole === 'admin') && (
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setSaveDialogOpen(true)}
-                  disabled={!program}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Planifier & Sauvegarder
-                </Button>
+                <>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    onClick={() => setSaveDialogOpen(true)}
+                    disabled={!program}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Planifier & Sauvegarder
+                  </Button>
+
+                  <Button
+                    className="w-full border-dashed border-2 text-muted-foreground hover:text-foreground hover:border-primary/50"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => setEventDialogOpen(true)}
+                  >
+                    <Flag className="h-4 w-4 mr-2 text-orange-500" />
+                    Créer un événement
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -214,7 +231,7 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
         </div>
       </div>
 
-      {/* Save PDF Dialog */}
+      {/* Save PDF Dialog (Séance) */}
       {program && (
         <SavePdfDialog
           open={saveDialogOpen}
@@ -225,6 +242,12 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
           totalTime={program.totalTime}
         />
       )}
+
+      {/* Create Event Dialog (Événement) */}
+      <CreateEventDialog
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+      />
     </>
   );
 }
