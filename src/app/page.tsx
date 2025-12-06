@@ -16,11 +16,11 @@ export default async function Home() {
         <div className="max-w-6xl w-full space-y-6 sm:space-y-8">
           <div className="text-center space-y-3 sm:space-y-4 px-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Bienvenue sur Running Data
+              ESL Team
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Créez des plans d'entraînement personnalisés et suivez vos
-              performances avec Garmin
+              Consultation du plan d&apos;entraînement et création de séances
+              personnalisées pour les athlètes de l&apos;ASUL Bron
             </p>
           </div>
 

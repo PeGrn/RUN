@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { getSessionDates, getSessionsByDate } from '@/actions/training-sessions';
 import { SessionDrawer } from './session-drawer';
@@ -24,6 +24,43 @@ export function PlanningCalendar() {
   const [sessionsForDate, setSessionsForDate] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Empêcher le scroll automatique du navigateur mobile lors du clic sur une date
+  useEffect(() => {
+    let scrollPosition = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (calendarRef.current && calendarRef.current.contains(e.target as Node)) {
+        // Sauvegarder la position de scroll actuelle
+        scrollPosition = window.scrollY;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (calendarRef.current && calendarRef.current.contains(e.target as Node)) {
+        // Restaurer la position de scroll après un court délai
+        // pour contrer le scroll automatique du navigateur
+        requestAnimationFrame(() => {
+          window.scrollTo({
+            top: scrollPosition,
+            behavior: 'instant' as ScrollBehavior
+          });
+        });
+      }
+    };
+
+    // Sur mobile uniquement
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
 
   // Charger les dates avec des séances quand le mois change
   useEffect(() => {
@@ -51,6 +88,11 @@ export function PlanningCalendar() {
   const handleDateClick = async (date: Date | undefined) => {
     if (!date) return;
 
+    // Retirer immédiatement le focus sur mobile pour éviter tout comportement indésirable
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+
     setSelectedDate(date);
 
     // Vérifier si cette date a des séances
@@ -58,10 +100,6 @@ export function PlanningCalendar() {
     const dateStr = formatDateLocal(date);
 
     if (!sessionDates.includes(dateStr)) {
-      // Retirer le focus de l'élément actif sur mobile pour éviter le scroll indésirable
-      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        (document.activeElement as HTMLElement)?.blur();
-      }
       return; // Pas de séances pour ce jour
     }
 
@@ -95,7 +133,15 @@ export function PlanningCalendar() {
   return (
     <div className="w-full sm:flex sm:justify-center">
       <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
-        <div className="relative w-full">
+        <div
+          ref={calendarRef}
+          className="relative w-full"
+          style={{
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitTapHighlightColor: 'transparent'
+          }}
+        >
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
               <div className="text-sm text-muted-foreground">Chargement...</div>
