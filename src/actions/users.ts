@@ -138,7 +138,7 @@ export async function approveUser(userId: string) {
         await resend.emails.send({
           from: FROM_EMAIL,
           to: userEmail,
-          subject: 'Votre compte Running Data a été approuvé ! 🎉',
+          subject: 'Votre demande d\'accès a été approuvée ! 🎉',
           react: ApprovalEmail({ userName, loginUrl }),
         });
         console.log(`✅ Email d'approbation envoyé à ${userEmail}`);

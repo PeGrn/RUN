@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Running Data - Entraînement VMA et Métriques Garmin",
+  title: "ESL Team - Entraînement VMA et Métriques Garmin",
   description: "Créez des plans d'entraînement VMA personnalisés et suivez vos performances avec Garmin Connect",
 };
 

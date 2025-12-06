@@ -11,32 +11,33 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { UserButton, useUser } from "@clerk/nextjs";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
-export function HeaderClerk() {
+// --- 1. NavLinks est défini à l'extérieur pour la performance et éviter les erreurs ---
+interface NavLinksProps {
+  mobile?: boolean;
+  onNavigate?: () => void;
+  role: string;
+  status: string;
+  isGarminAuthenticated: boolean;
+}
+
+const NavLinks = ({ 
+  mobile = false, 
+  onNavigate, 
+  role, 
+  status, 
+  isGarminAuthenticated 
+}: NavLinksProps) => {
   const pathname = usePathname();
-  const { user } = useUser();
 
-  const isActive = (path: string) => {
-    return pathname === path;
-  };
+  const isActive = (path: string) => pathname === path;
 
-  // Récupérer les métadonnées de l'utilisateur
-  const metadata = (user?.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
-  const isAdminUser = user?.emailAddresses[0]?.emailAddress === adminEmail;
-
-  const role = isAdminUser ? 'admin' : (metadata.role || 'athlete');
-  const status = isAdminUser ? 'approved' : (metadata.status || 'pending');
-
-  // Déterminer si l'utilisateur est authentifié Garmin
-  const isGarminAuthenticated = user?.publicMetadata?.garminAuthenticated === true;
-
-  const NavLinks = ({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) => (
+  return (
     <>
       <Link href="/" onClick={onNavigate}>
         <Button
@@ -52,7 +53,6 @@ export function HeaderClerk() {
         </Button>
       </Link>
 
-      {/* Planning - accessible par tous les utilisateurs approuvés */}
       {status === 'approved' && (
         <Link href="/planning" onClick={onNavigate}>
           <Button
@@ -69,7 +69,6 @@ export function HeaderClerk() {
         </Link>
       )}
 
-      {/* Training - accessible par tous, mais fonctionnalités limitées pour les athlètes */}
       {status === 'approved' && (
         <Link href="/training" onClick={onNavigate}>
           <Button
@@ -86,7 +85,6 @@ export function HeaderClerk() {
         </Link>
       )}
 
-      {/* Sessions - uniquement pour les coachs et admins */}
       {status === 'approved' && (role === 'coach' || role === 'admin') && (
         <Link href="/sessions" onClick={onNavigate}>
           <Button
@@ -103,7 +101,6 @@ export function HeaderClerk() {
         </Link>
       )}
 
-      {/* Dashboard Garmin - accessible par tous les utilisateurs approuvés */}
       {status === 'approved' && isGarminAuthenticated && (
         <Link href="/dashboard" onClick={onNavigate}>
           <Button
@@ -120,7 +117,6 @@ export function HeaderClerk() {
         </Link>
       )}
 
-      {/* Admin - uniquement pour les coachs et admins */}
       {status === 'approved' && (role === 'coach' || role === 'admin') && (
         <Link href="/admin" onClick={onNavigate}>
           <Button
@@ -138,13 +134,27 @@ export function HeaderClerk() {
       )}
     </>
   );
+};
+
+// --- Composant Principal ---
+export function HeaderClerk() {
+  const { user } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Récupérer les métadonnées de l'utilisateur
+  const metadata = (user?.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
+  const isAdminUser = user?.emailAddresses[0]?.emailAddress === adminEmail;
+
+  const role = isAdminUser ? 'admin' : (metadata.role || 'athlete');
+  const status = isAdminUser ? 'approved' : (metadata.status || 'pending');
+  const isGarminAuthenticated = user?.publicMetadata?.garminAuthenticated === true;
 
   return (
     <header className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
-          {/* Logo & Brand */}
           <Link href="/" className="group flex items-center gap-3 flex-shrink-0 transition-opacity hover:opacity-90">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 transition-transform duration-300 group-hover:scale-105">
                <Image 
@@ -160,12 +170,14 @@ export function HeaderClerk() {
             </span>
           </Link>
 
-          {/* Desktop Navigation - Pill Shape */}
           <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
-            <NavLinks />
+            <NavLinks 
+              role={role} 
+              status={status} 
+              isGarminAuthenticated={isGarminAuthenticated} 
+            />
           </nav>
 
-          {/* Desktop User Button */}
           <div className="hidden md:flex items-center gap-2">
             <UserButton 
                 afterSignOutUrl="/"
@@ -177,15 +189,18 @@ export function HeaderClerk() {
             />
           </div>
 
-          {/* Mobile Menu */}
-          <Sheet>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" className="flex-shrink-0 -mr-2">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl">
+            {/* 
+                2. AJOUT DE LA CLASSE 'pt-16' ICI 
+                Cela pousse le contenu vers le bas pour ne pas être caché par le header fixe.
+            */}
+            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl pt-18">
               <SheetHeader className="border-b border-border/50 pb-6 mb-6">
                 <SheetTitle className="flex items-center gap-3">
                    <div className="relative h-8 w-8">
@@ -199,12 +214,17 @@ export function HeaderClerk() {
                   <span className="font-bold text-xl tracking-tight">ESL Team</span>
                 </SheetTitle>
               </SheetHeader>
+              
               <nav className="flex flex-col gap-2">
-                <SheetClose asChild>
-                  <div className="flex flex-col gap-2">
-                    <NavLinks mobile onNavigate={() => {}} />
-                  </div>
-                </SheetClose>
+                 <div className="flex flex-col gap-2">
+                   <NavLinks 
+                     mobile 
+                     onNavigate={() => setIsOpen(false)} 
+                     role={role}
+                     status={status}
+                     isGarminAuthenticated={isGarminAuthenticated}
+                   />
+                 </div>
 
                 <div className="pt-6 mt-6 border-t border-border/50 flex justify-center">
                   <UserButton 
