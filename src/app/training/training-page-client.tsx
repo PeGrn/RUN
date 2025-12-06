@@ -12,8 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Download, Edit, Eye, BarChart3, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import type { UserRole } from '@/lib/auth';
 
-export default function TrainingPageClient() {
+interface TrainingPageClientProps {
+  userRole: UserRole;
+}
+
+export default function TrainingPageClient({ userRole }: TrainingPageClientProps) {
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -91,16 +96,19 @@ export default function TrainingPageClient() {
                 <Download className="h-4 w-4 mr-2" />
                 Télécharger PDF
               </Button>
-              <Button
-                className="w-full"
-                size="lg"
-                variant="outline"
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={!program}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Sauvegarder
-              </Button>
+              {/* Bouton Sauvegarder - uniquement pour les coachs et admins */}
+              {(userRole === 'coach' || userRole === 'admin') && (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setSaveDialogOpen(true)}
+                  disabled={!program}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Planifier & Sauvegarder
+                </Button>
+              )}
             </div>
 
             {/* Info Card */}
