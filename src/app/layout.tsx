@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from "@/components/ui/sonner";
 import { HeaderWrapper } from "@/components/header-wrapper";
+import RegisterSW from "./RegisterSW";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,6 +33,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <HeaderWrapper />
+          <RegisterSW />
           <main className="pt-16">
             {children}
           </main>

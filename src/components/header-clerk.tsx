@@ -75,8 +75,8 @@ export function HeaderClerk() {
         </Link>
       )}
 
-      {/* Sessions - accessible par tous les utilisateurs approuvés */}
-      {status === 'approved' && (
+      {/* Sessions - uniquement pour les coachs et admins */}
+      {status === 'approved' && (role === 'coach' || role === 'admin') && (
         <Link href="/sessions" onClick={onNavigate}>
           <Button
             variant={isActive("/sessions") ? "default" : "ghost"}
