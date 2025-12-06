@@ -10,11 +10,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Mail } from 'lucide-react';
 import { sendSessionEmail } from '@/actions/email';
 import { toast } from 'sonner';
+import { UserSearchSelect } from './user-search-select';
 
 interface SendEmailDialogProps {
   open: boolean;
@@ -26,12 +25,18 @@ interface SendEmailDialogProps {
 }
 
 export function SendEmailDialog({ open, onOpenChange, session }: SendEmailDialogProps) {
-  const [email, setEmail] = useState('');
+  const [selectedEmail, setSelectedEmail] = useState('');
+  const [selectedUserName, setSelectedUserName] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleSelectUser = (email: string, userName: string) => {
+    setSelectedEmail(email);
+    setSelectedUserName(userName);
+  };
+
   const handleSend = async () => {
-    if (!email || !email.includes('@')) {
-      toast.error('Veuillez entrer une adresse email valide');
+    if (!selectedEmail || !selectedEmail.includes('@')) {
+      toast.error('Veuillez sélectionner un destinataire');
       return;
     }
 
@@ -41,12 +46,13 @@ export function SendEmailDialog({ open, onOpenChange, session }: SendEmailDialog
       const result = await sendSessionEmail({
         sessionId: session.id,
         sessionName: session.name,
-        toEmail: email,
+        toEmail: selectedEmail,
       });
 
       if (result.success) {
-        toast.success(`Email envoyé à ${email}`);
-        setEmail('');
+        toast.success(`Email envoyé à ${selectedUserName || selectedEmail}`);
+        setSelectedEmail('');
+        setSelectedUserName('');
         onOpenChange(false);
       } else {
         toast.error('Erreur lors de l\'envoi de l\'email');
@@ -72,21 +78,10 @@ export function SendEmailDialog({ open, onOpenChange, session }: SendEmailDialog
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Adresse email du destinataire</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="exemple@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !loading) {
-                  handleSend();
-                }
-              }}
-            />
-          </div>
+          <UserSearchSelect
+            onSelectUser={handleSelectUser}
+            selectedEmail={selectedEmail}
+          />
         </div>
 
         <DialogFooter>
@@ -97,7 +92,7 @@ export function SendEmailDialog({ open, onOpenChange, session }: SendEmailDialog
           >
             Annuler
           </Button>
-          <Button onClick={handleSend} disabled={loading}>
+          <Button onClick={handleSend} disabled={loading || !selectedEmail}>
             {loading ? 'Envoi en cours...' : 'Envoyer'}
           </Button>
         </DialogFooter>

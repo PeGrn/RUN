@@ -1,8 +1,18 @@
 import { getTrainingSessions } from '@/actions/training-sessions';
 import { SessionsList } from '@/components/sessions/sessions-list';
-import { History, Sparkles } from 'lucide-react';
+import { History } from 'lucide-react';
+import { isCoachOrAdmin } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 
 export default async function SessionsPage() {
+  // Vérifier que l'utilisateur est coach ou admin
+  const hasPermission = await isCoachOrAdmin();
+  if (!hasPermission) {
+    redirect('/planning');
+  }
+
   const { sessions } = await getTrainingSessions();
 
   return (

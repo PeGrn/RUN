@@ -22,28 +22,30 @@ export default function ApprovalEmail({
   return (
     <Html>
       <Head />
-      <Preview>Votre compte a été approuvé - Accédez maintenant à Running Data</Preview>
+      <Preview>Votre compte a été approuvé - Bienvenue chez ESL Team !</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Félicitations ! 🎉</Heading>
+          {/* Modification du titre */}
+          <Heading style={h1}>Bienvenue ! 🎉</Heading>
 
           <Text style={text}>
             Bonjour {userName},
           </Text>
 
+          {/* Modification du texte d'intro avec le nom ESL Team */}
           <Text style={text}>
-            Bonne nouvelle ! Votre compte sur <strong>Running Data</strong> a été approuvé par un coach.
+            Bonne nouvelle ! Votre compte sur <strong>la plateforme ESL Team</strong> a été approuvé par un coach.
           </Text>
 
           <Text style={text}>
             Vous pouvez maintenant accéder à toutes les fonctionnalités de la plateforme :
           </Text>
 
+          {/* Nouvelle liste de fonctionnalités */}
           <Section style={listContainer}>
             <Text style={listItem}>✅ Consulter votre planning d'entraînement</Text>
-            <Text style={listItem}>✅ Créer des programmes VMA personnalisés</Text>
-            <Text style={listItem}>✅ Suivre vos séances</Text>
-            <Text style={listItem}>✅ Analyser vos performances</Text>
+            <Text style={listItem}>✅ Créer vos propres séances</Text>
+            <Text style={listItem}>✅ Télécharger les séances en PDF</Text>
           </Section>
 
           <Section style={buttonContainer}>
@@ -54,7 +56,7 @@ export default function ApprovalEmail({
 
           <Text style={footer}>
             Bon entraînement ! 🏃‍♂️💨<br />
-            L'équipe Running Data
+            L'équipe ESL Team
           </Text>
         </Container>
       </Body>
@@ -62,7 +64,7 @@ export default function ApprovalEmail({
   );
 }
 
-// Styles
+// Styles (identiques à ta version précédente)
 const main = {
   backgroundColor: '#f6f9fc',
   fontFamily:

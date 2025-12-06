@@ -60,8 +60,15 @@ export function SavePdfDialog({
     formData.append('totalTime', totalTime.toString());
 
     // Ajouter la date si elle est définie
+    // Important : Créer une date à midi UTC pour éviter les problèmes de timezone
     if (sessionDate) {
-      formData.append('sessionDate', sessionDate.toISOString());
+      const normalizedDate = new Date(Date.UTC(
+        sessionDate.getFullYear(),
+        sessionDate.getMonth(),
+        sessionDate.getDate(),
+        12, 0, 0
+      ));
+      formData.append('sessionDate', normalizedDate.toISOString());
     }
 
     // Important : On stringify le tableau d'objets pour le passer dans le FormData

@@ -59,6 +59,49 @@ export async function getAllUsers() {
 }
 
 /**
+ * Récupère uniquement les utilisateurs approuvés (pour l'envoi d'emails)
+ */
+export async function getApprovedUsers() {
+  try {
+    // Vérifier les permissions
+    const hasPermission = await isCoachOrAdmin();
+    if (!hasPermission) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const client = await clerkClient();
+    const { data: users } = await client.users.getUserList({
+      limit: 100,
+      orderBy: 'first_name',
+    });
+
+    const approvedUsers = users
+      .map((user) => {
+        const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
+        const adminEmail = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
+        const isAdminUser = user.emailAddresses[0]?.emailAddress === adminEmail;
+
+        return {
+          id: user.id,
+          email: user.emailAddresses[0]?.emailAddress || '',
+          firstName: user.firstName,
+          lastName: user.lastName,
+          imageUrl: user.imageUrl,
+          role: isAdminUser ? 'admin' : (metadata.role || 'athlete'),
+          status: isAdminUser ? 'approved' : (metadata.status || 'pending'),
+          createdAt: user.createdAt,
+        };
+      })
+      .filter((user) => user.status === 'approved'); // Filtrer uniquement les approuvés
+
+    return { success: true, users: approvedUsers };
+  } catch (error) {
+    console.error('Error getting approved users:', error);
+    return { success: false, error: 'Failed to get approved users' };
+  }
+}
+
+/**
  * Approuve un utilisateur (coach/admin seulement)
  */
 export async function approveUser(userId: string) {

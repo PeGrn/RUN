@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Mail, Trash2, Calendar, Route, Clock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Download, Mail, Trash2, Calendar, Route, Clock, Copy, Search, X } from 'lucide-react';
 import { formatTime } from '@/lib/vma/calculator';
 import { SendEmailDialog } from './send-email-dialog';
 import { DeleteSessionDialog } from './delete-session-dialog';
 import { toast } from 'sonner';
 import { deleteTrainingSession, getSessionPdfUrl } from '@/actions/training-sessions';
+import { useRouter } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface Session {
   id: string;
@@ -17,6 +24,7 @@ interface Session {
   vma: number;
   totalDistance: number;
   totalTime: number;
+  sessionDate: Date | null;
   createdAt: Date;
 }
 
@@ -25,11 +33,33 @@ interface SessionsListProps {
 }
 
 export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
+  const router = useRouter();
   const [sessions, setSessions] = useState(initialSessions);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
+
+  // Filtres
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
+
+  // Filtrer les séances
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((session) => {
+      // Filtre par recherche (nom ou description)
+      const matchesSearch = !searchQuery ||
+        session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (session.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+      // Filtre par date de planification
+      const matchesDate = !filterDate ||
+        (session.sessionDate &&
+          new Date(session.sessionDate).toDateString() === filterDate.toDateString());
+
+      return matchesSearch && matchesDate;
+    });
+  }, [sessions, searchQuery, filterDate]);
 
   const handleDownload = async (session: Session) => {
     try {
@@ -65,6 +95,10 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
   const handleSendEmail = (session: Session) => {
     setSelectedSession(session);
     setEmailDialogOpen(true);
+  };
+
+  const handleDuplicate = (session: Session) => {
+    router.push(`/training?duplicate=${session.id}`);
   };
 
   const handleDelete = (session: Session) => {
@@ -109,8 +143,116 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sessions.map((session) => (
+      {/* Filtres */}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Barre de recherche */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher par nom ou description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filtre par date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full sm:w-[240px] justify-start text-left font-normal",
+                  !filterDate && "text-muted-foreground"
+                )}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {filterDate ? (
+                  format(filterDate, "PPP", { locale: fr })
+                ) : (
+                  <span>Date de planification</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                mode="single"
+                selected={filterDate}
+                onSelect={setFilterDate}
+                initialFocus
+                locale={fr}
+              />
+              {filterDate && (
+                <div className="p-3 border-t">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setFilterDate(undefined)}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Réinitialiser
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Indicateur de résultats */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {filteredSessions.length} séance{filteredSessions.length > 1 ? 's' : ''} trouvée{filteredSessions.length > 1 ? 's' : ''}
+            {(searchQuery || filterDate) && ` sur ${sessions.length}`}
+          </span>
+          {(searchQuery || filterDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setFilterDate(undefined);
+              }}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Effacer les filtres
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Liste des séances */}
+      {filteredSessions.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+          <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Aucune séance trouvée</h3>
+          <p className="text-muted-foreground mb-4">
+            Essayez de modifier vos critères de recherche
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearchQuery('');
+              setFilterDate(undefined);
+            }}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Réinitialiser les filtres
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredSessions.map((session) => (
           <Card key={session.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-xl">{session.name}</CardTitle>
@@ -141,49 +283,80 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
                   </div>
                 </div>
 
-                <div className="space-y-1 col-span-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    <span>Planifiée le</span>
+                  </div>
+                  <div className="font-semibold text-xs">
+                    {session.sessionDate
+                      ? new Date(session.sessionDate).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : 'Non planifiée'}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>Créée le</span>
                   </div>
                   <div className="font-semibold text-xs">
-                    {new Date(session.createdAt).toLocaleDateString('fr-FR')}
+                    {new Date(session.createdAt).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleDownload(session)}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Télécharger
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleSendEmail(session)}
+                  >
+                    <Mail className="h-4 w-4 mr-1" />
+                    Envoyer
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(session)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="flex-1"
-                  onClick={() => handleDownload(session)}
+                  className="w-full"
+                  onClick={() => handleDuplicate(session)}
                 >
-                  <Download className="h-4 w-4 mr-1" />
-                  Télécharger
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleSendEmail(session)}
-                >
-                  <Mail className="h-4 w-4 mr-1" />
-                  Envoyer
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(session)}
-                >
-                  <Trash2 className="h-4 w-4" />
+                  <Copy className="h-4 w-4 mr-1" />
+                  Dupliquer
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Dialog d'envoi d'email */}
       {selectedSession && (

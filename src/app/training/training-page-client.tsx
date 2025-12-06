@@ -13,15 +13,58 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Download, Edit, Eye, BarChart3, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { UserRole } from '@/lib/auth';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { getTrainingSessionById } from '@/actions/training-sessions';
 
 interface TrainingPageClientProps {
   userRole: UserRole;
 }
 
 export default function TrainingPageClient({ userRole }: TrainingPageClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
+  // Handle duplication from query param
+  useEffect(() => {
+    const duplicateId = searchParams.get('duplicate');
+    if (!duplicateId || !isLoaded) return;
+
+    const loadDuplicateSession = async () => {
+      try {
+        const result = await getTrainingSessionById(duplicateId);
+
+        if (result.success && result.session) {
+          const steps = result.session.steps as unknown as TrainingElement[];
+
+          // Validation des steps
+          const isValid = Array.isArray(steps) && steps.every(
+            (element) => element.steps && Array.isArray(element.steps)
+          );
+
+          if (isValid) {
+            setBuilderElements(steps);
+            toast.success(`Séance "${result.session.name}" chargée`);
+
+            // Nettoyer l'URL en retirant le query param
+            router.replace('/training');
+          } else {
+            toast.error('Données de la séance invalides');
+          }
+        } else {
+          toast.error('Séance introuvable');
+        }
+      } catch (error) {
+        console.error('Error loading duplicate session:', error);
+        toast.error('Erreur lors du chargement de la séance');
+      }
+    };
+
+    loadDuplicateSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isLoaded]);
 
   // Validate and clean builder elements on load
   useEffect(() => {
