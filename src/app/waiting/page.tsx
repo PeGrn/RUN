@@ -26,7 +26,7 @@ export default async function WaitingPage() {
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            Votre demande d'accès est en cours d'examen.
+            Votre demande d&apos;accès est en cours de validation.
           </p>
 
           <div className="bg-muted/50 rounded-lg p-6 mb-8">
@@ -35,7 +35,7 @@ export default async function WaitingPage() {
               <div className="text-left">
                 <h3 className="font-semibold mb-2">Prochaines étapes</h3>
                 <p className="text-sm text-muted-foreground">
-                  Un coach ou administrateur doit approuver votre compte avant que vous puissiez accéder à l'application.
+                  Un coach ou administrateur doit approuver votre compte avant que vous puissiez accéder à l&apos;application.
                   Vous recevrez un email de confirmation une fois votre compte approuvé.
                 </p>
               </div>
@@ -55,7 +55,7 @@ export default async function WaitingPage() {
           </div>
 
           <p className="text-sm text-muted-foreground mb-6">
-            En attendant, n'hésitez pas à vous déconnecter et revenir plus tard.
+            Un mail vous sera envoyé quand votre compte sera approuvé.
           </p>
 
           <SignOutButton>
@@ -67,7 +67,7 @@ export default async function WaitingPage() {
 
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Statut actuel : <span className="font-semibold text-orange-600">En attente d'approbation</span>
+            Statut actuel : <span className="font-semibold text-orange-600">En attente d&apos;approbation</span>
           </p>
         </div>
       </div>

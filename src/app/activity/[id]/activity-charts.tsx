@@ -11,7 +11,6 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
   Area,
@@ -20,7 +19,6 @@ import {
   BarChart,
   CartesianGrid,
   Line,
-  LineChart,
   XAxis,
   YAxis,
   ComposedChart,

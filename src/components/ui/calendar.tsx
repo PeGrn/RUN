@@ -184,12 +184,15 @@ function CalendarDayButton({
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
+
+  // Désactiver le focus automatique sur les appareils tactiles pour éviter
+  // le scroll indésirable et l'espace blanc sur mobile
   React.useEffect(() => {
-    // Désactiver le focus automatique sur les appareils tactiles pour éviter
-    // le scroll indésirable et l'espace blanc sur mobile
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-    if (modifiers.focused && !isTouchDevice) {
-      ref.current?.focus()
+    if (modifiers.focused && typeof window !== 'undefined') {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      if (!isTouchDevice) {
+        ref.current?.focus()
+      }
     }
   }, [modifiers.focused])
 

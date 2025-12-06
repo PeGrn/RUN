@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { getSessionDates, getSessionsByDate } from '@/actions/training-sessions';
 import { SessionDrawer } from './session-drawer';
@@ -24,50 +24,9 @@ export function PlanningCalendar() {
   const [sessionsForDate, setSessionsForDate] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
-  const calendarRef = useRef<HTMLDivElement>(null);
-
-  // Empêcher le scroll automatique du navigateur mobile lors du clic sur une date
-  useEffect(() => {
-    let scrollPosition = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (calendarRef.current && calendarRef.current.contains(e.target as Node)) {
-        // Sauvegarder la position de scroll actuelle
-        scrollPosition = window.scrollY;
-      }
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (calendarRef.current && calendarRef.current.contains(e.target as Node)) {
-        // Restaurer la position de scroll après un court délai
-        // pour contrer le scroll automatique du navigateur
-        requestAnimationFrame(() => {
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: 'instant' as ScrollBehavior
-          });
-        });
-      }
-    };
-
-    // Sur mobile uniquement
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      document.addEventListener('touchstart', handleTouchStart, { passive: true });
-      document.addEventListener('touchend', handleTouchEnd, { passive: true });
-    }
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
 
   // Charger les dates avec des séances quand le mois change
-  useEffect(() => {
-    loadSessionDates();
-  }, [currentMonth]);
-
-  const loadSessionDates = async () => {
+  const loadSessionDates = useCallback(async () => {
     setLoadingDates(true);
     try {
       const year = currentMonth.getFullYear();
@@ -82,10 +41,14 @@ export function PlanningCalendar() {
     } finally {
       setLoadingDates(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    loadSessionDates();
+  }, [loadSessionDates]);
 
   // Gérer le clic sur une date
-  const handleDateClick = async (date: Date | undefined) => {
+  const handleDateClick = useCallback(async (date: Date | undefined) => {
     if (!date) return;
 
     // Vérifier si cette date a des séances AVANT de sélectionner
@@ -119,32 +82,24 @@ export function PlanningCalendar() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionDates]);
 
   // Fonction pour personnaliser l'affichage des jours avec des dots
-  const modifiers = {
+  const modifiers = useMemo(() => ({
     hasSession: (date: Date) => {
       const dateStr = formatDateLocal(date);
       return sessionDates.includes(dateStr);
     },
-  };
+  }), [sessionDates]);
 
-  const modifiersClassNames = {
+  const modifiersClassNames = useMemo(() => ({
     hasSession: 'relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full',
-  };
+  }), []);
 
   return (
     <div className="w-full sm:flex sm:justify-center">
       <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
-        <div
-          ref={calendarRef}
-          className="relative w-full"
-          style={{
-            WebkitUserSelect: 'none',
-            WebkitTouchCallout: 'none',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
+        <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
               <div className="text-sm text-muted-foreground">Chargement...</div>

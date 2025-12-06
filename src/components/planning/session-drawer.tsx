@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -9,13 +9,53 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Download, ChevronRight, Clock, Route } from 'lucide-react';
+import { Download, ChevronRight, Clock, Route, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getSessionPdfUrl } from '@/actions/training-sessions';
+import { sendSessionEmail } from '@/actions/email';
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { TrainingElement } from '@/lib/vma';
 import type { TrainingSession } from '@prisma/client';
+
+// Fonctions utilitaires pures (déplacées hors du composant pour éviter les re-créations)
+const formatDuration = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const formatDistance = (meters: number): string => {
+  return (meters / 1000).toFixed(2);
+};
+
+const generateSessionSummary = (elements: TrainingElement[]): string => {
+  if (!elements || elements.length === 0) {
+    return 'Aucun détail disponible';
+  }
+
+  const summary: string[] = [];
+  let blockIndex = 1;
+
+  elements.forEach((block) => {
+    const blockTitle = block.name || `Bloc ${blockIndex}`;
+    summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
+
+    block.steps.forEach((step, stepIdx) => {
+      const distance = `${(step.distance / 1000).toFixed(2)} km`;
+      const intensity = `${step.vmaPercentage}% VMA`;
+      const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
+      const stepName = step.name || `Étape ${stepIdx + 1}`;
+
+      summary.push(`   • ${stepName}: ${distance} à ${intensity}${rest}`);
+    });
+
+    blockIndex++;
+  });
+
+  return summary.join('\n');
+};
 
 interface SessionDrawerProps {
   open: boolean;
@@ -34,17 +74,19 @@ export function SessionDrawer({
 }: SessionDrawerProps) {
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const { user } = useUser();
 
   // Réinitialiser la sélection quand on ferme le drawer
-  const handleOpenChange = (isOpen: boolean) => {
+  const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
       setSelectedSession(null);
     }
     onOpenChange(isOpen);
-  };
+  }, [onOpenChange]);
 
   // Gérer le téléchargement du PDF
-  const handleDownloadPdf = async (sessionId: string, sessionName: string) => {
+  const handleDownloadPdf = useCallback(async (sessionId: string, sessionName: string) => {
     setDownloading(true);
     try {
       const result = await getSessionPdfUrl(sessionId);
@@ -66,49 +108,37 @@ export function SessionDrawer({
     } finally {
       setDownloading(false);
     }
-  };
+  }, []);
 
-  // Formater la durée en minutes:secondes
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Gérer l'envoi par email
+  const handleSendEmail = useCallback(async (sessionId: string, sessionName: string) => {
+    const userEmail = user?.emailAddresses[0]?.emailAddress;
 
-  // Formater la distance en km
-  const formatDistance = (meters: number) => {
-    return (meters / 1000).toFixed(2);
-  };
-
-  // Générer le résumé textuel des blocs
-  const generateSessionSummary = (elements: TrainingElement[]) => {
-    if (!elements || elements.length === 0) {
-      return 'Aucun détail disponible';
+    if (!userEmail) {
+      toast.error('Email non disponible');
+      return;
     }
 
-    let summary: string[] = [];
-    let blockIndex = 1;
-
-    elements.forEach((block) => {
-      // En-tête du bloc de répétition
-      const blockTitle = block.name || `Bloc ${blockIndex}`;
-      summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
-
-      // Détails des steps dans le bloc
-      block.steps.forEach((step, stepIdx) => {
-        const distance = `${(step.distance / 1000).toFixed(2)} km`;
-        const intensity = `${step.vmaPercentage}% VMA`;
-        const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
-        const stepName = step.name || `Étape ${stepIdx + 1}`;
-
-        summary.push(`   • ${stepName}: ${distance} à ${intensity}${rest}`);
+    setSending(true);
+    try {
+      const result = await sendSessionEmail({
+        sessionId,
+        sessionName,
+        toEmail: userEmail,
       });
 
-      blockIndex++;
-    });
-
-    return summary.join('\n');
-  };
+      if (result.success) {
+        toast.success(`Email envoyé à ${userEmail}`);
+      } else {
+        toast.error('Erreur lors de l\'envoi de l\'email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Erreur lors de l\'envoi de l\'email');
+    } finally {
+      setSending(false);
+    }
+  }, [user]);
 
   // Vue : Chargement
   if (loading) {
@@ -224,17 +254,30 @@ export function SessionDrawer({
           </div>
         </div>
 
-        {/* Bouton de téléchargement (sticky en bas) */}
+        {/* Boutons d'actions (sticky en bas) */}
         <div className="sticky bottom-0 left-0 right-0 pt-4 pb-2 bg-background border-t -mx-6 px-6">
-          <Button
-            onClick={() => handleDownloadPdf(session.id, session.name)}
-            className="w-full"
-            size="lg"
-            disabled={downloading}
-          >
-            <Download className="mr-2 h-5 w-5" />
-            {downloading ? 'Téléchargement...' : 'Télécharger la séance (PDF)'}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              onClick={() => handleDownloadPdf(session.id, session.name)}
+              className="w-full"
+              size="lg"
+              disabled={downloading || sending}
+              variant="default"
+            >
+              <Download className="mr-2 h-5 w-5" />
+              {downloading ? 'Téléchargement...' : 'Télécharger'}
+            </Button>
+            <Button
+              onClick={() => handleSendEmail(session.id, session.name)}
+              className="w-full"
+              size="lg"
+              disabled={downloading || sending}
+              variant="outline"
+            >
+              <Mail className="mr-2 h-5 w-5" />
+              {sending ? 'Envoi...' : 'Envoyer par email'}
+            </Button>
+          </div>
         </div>
 
         {/* Bouton retour si on vient de la liste */}

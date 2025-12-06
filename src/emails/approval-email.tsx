@@ -43,7 +43,7 @@ export default function ApprovalEmail({
 
           {/* Nouvelle liste de fonctionnalités */}
           <Section style={listContainer}>
-            <Text style={listItem}>✅ Consulter votre planning d'entraînement</Text>
+            <Text style={listItem}>✅ Consulter votre planning d&apos;entraînement</Text>
             <Text style={listItem}>✅ Créer vos propres séances</Text>
             <Text style={listItem}>✅ Télécharger les séances en PDF</Text>
           </Section>
@@ -56,7 +56,7 @@ export default function ApprovalEmail({
 
           <Text style={footer}>
             Bon entraînement ! 🏃‍♂️💨<br />
-            L'équipe ESL Team
+            L&apos;équipe ESL Team
           </Text>
         </Container>
       </Body>
