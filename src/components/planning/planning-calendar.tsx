@@ -77,13 +77,13 @@ export function PlanningCalendar() {
       (document.activeElement as HTMLElement)?.blur();
     }
 
-    setSelectedDate(date);
-
-    // Si aucune session ou événement, pas besoin de charger
+    // NE PAS sélectionner si aucune donnée disponible
     if (!hasSession && !hasEvent) {
       return;
     }
 
+    // Sélectionner uniquement si données disponibles
+    setSelectedDate(date);
     setLoading(true);
 
     try {
@@ -107,6 +107,12 @@ export function PlanningCalendar() {
     } finally {
       setLoading(false);
     }
+  }, [sessionDates, eventDates]);
+
+  // Calculer les dates désactivées (celles sans séance/événement)
+  const disabledMatcher = useCallback((date: Date) => {
+    const dateStr = formatDateLocal(date);
+    return !sessionDates.includes(dateStr) && !eventDates.includes(dateStr);
   }, [sessionDates, eventDates]);
 
   const modifiers = useMemo(() => ({
@@ -138,7 +144,7 @@ export function PlanningCalendar() {
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
             className="w-full touch-pan-y"
-            disabled={loading}
+            disabled={disabledMatcher}
             showOutsideDays={false}
           />
         </div>
