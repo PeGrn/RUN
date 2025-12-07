@@ -1,5 +1,6 @@
 import { getTrainingSessions } from '@/actions/training-sessions';
-import { SessionsList } from '@/components/sessions/sessions-list';
+import { getUserEvents } from '@/actions/events'; // Assure-toi d'avoir cette fonction (voir point 2)
+import { HistoryList } from '@/components/history/history-list';
 import { History } from 'lucide-react';
 import { isCoachOrAdmin } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -13,7 +14,14 @@ export default async function SessionsPage() {
     redirect('/planning');
   }
 
-  const { sessions } = await getTrainingSessions();
+  // Récupérer les séances ET les événements en parallèle
+  const [sessionsResult, eventsResult] = await Promise.all([
+    getTrainingSessions(),
+    getUserEvents()
+  ]);
+
+  const sessions = sessionsResult.success && sessionsResult.sessions ? sessionsResult.sessions : [];
+  const events = eventsResult.success && eventsResult.events ? eventsResult.events : [];
 
   return (
     <>
@@ -24,14 +32,14 @@ export default async function SessionsPage() {
             <div className="flex items-center gap-2 mb-3">
               <History className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
-                Historique des Séances
+                Historique Global
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
-              Mes Programmes VMA
+              Historique du Club
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-              Retrouvez tous vos programmes d'entraînement sauvegardés
+              Retrouvez toutes les séances d&apos;entraînement et les événements passés
             </p>
           </div>
         </div>
@@ -39,7 +47,10 @@ export default async function SessionsPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 sm:py-8">
-        <SessionsList sessions={sessions || []} />
+        <HistoryList 
+            initialSessions={sessions} 
+            initialEvents={events} 
+        />
       </div>
     </>
   );

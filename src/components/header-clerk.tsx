@@ -12,22 +12,21 @@ import {
   CalendarDays, 
   Shield, 
   LogOut, 
-  User as UserIcon 
+  X // Import de l'icône X pour fermer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
+  // SheetHeader et Title ne sont plus strictement nécessaires si on fait un menu full-top propre
 } from "@/components/ui/sheet";
 import { UserButton, useUser, useClerk } from "@clerk/nextjs";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-// --- 1. NavLinks ---
+// --- 1. NavLinks (Inchangé) ---
 interface NavLinksProps {
   mobile?: boolean;
   onNavigate?: () => void;
@@ -152,7 +151,6 @@ export function HeaderClerk() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Récupérer les métadonnées de l'utilisateur
   const metadata = (user?.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
   const isAdminUser = user?.emailAddresses[0]?.emailAddress === adminEmail;
@@ -161,7 +159,6 @@ export function HeaderClerk() {
   const status = isAdminUser ? 'approved' : (metadata.status || 'pending');
   const isGarminAuthenticated = user?.publicMetadata?.garminAuthenticated === true;
 
-  // Fonction de déconnexion personnalisée
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
@@ -169,11 +166,12 @@ export function HeaderClerk() {
   };
 
   return (
-    <header className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
+    <header className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
-          <Link href="/" className="group flex items-center gap-3 flex-shrink-0 transition-opacity hover:opacity-90">
+          {/* Logo */}
+          <Link href="/" className="group flex items-center gap-3 flex-shrink-0 transition-opacity hover:opacity-90 z-[101]">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 transition-transform duration-300 group-hover:scale-105">
                <Image 
                  src="/LOGO_ASUL_BRON.png" 
@@ -188,7 +186,7 @@ export function HeaderClerk() {
             </span>
           </Link>
 
-          {/* Navigation Desktop */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
             <NavLinks 
               role={role} 
@@ -197,7 +195,7 @@ export function HeaderClerk() {
             />
           </nav>
 
-          {/* UserButton Desktop */}
+          {/* User Button Desktop */}
           <div className="hidden md:flex items-center gap-2">
             <UserButton 
                 afterSignOutUrl="/"
@@ -211,31 +209,22 @@ export function HeaderClerk() {
             />
           </div>
 
-          {/* Menu Mobile */}
+          {/* Mobile Menu Trigger & Sheet */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
+            <SheetTrigger asChild className="md:hidden z-[101]">
               <Button variant="ghost" size="icon" className="flex-shrink-0 -mr-2">
-                <Menu className="h-6 w-6" />
+                {/* On change l'icône selon si c'est ouvert ou fermé */}
+                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl pt-18 overflow-y-auto">
-              <SheetHeader className="border-b border-border/50 pb-6 mb-6">
-                <SheetTitle className="flex items-center gap-3">
-                   <div className="relative h-8 w-8">
-                    <Image 
-                        src="/LOGO_ASUL_BRON.png" 
-                        alt="Logo" 
-                        fill
-                        className="object-contain"
-                    />
-                  </div>
-                  <span className="font-bold text-xl tracking-tight">ESL Team</span>
-                </SheetTitle>
-              </SheetHeader>
+            
+            {/* side="top" : Le menu descend du haut.
+                pt-[80px] : Laisse la place pour le header fixe (64px + marge) afin de ne pas cacher le logo.
+            */}
+            <SheetContent side="top" className="w-full pt-[80px] pb-6 border-b border-border/50 bg-background/95 backdrop-blur-xl">
               
-              {/* MODIFICATION: Retrait de h-full ici */}
-              <nav className="flex flex-col gap-6"> 
+              <nav className="container mx-auto flex flex-col gap-6"> 
                   <div className="flex flex-col gap-2">
                     <NavLinks 
                       mobile 
@@ -246,7 +235,6 @@ export function HeaderClerk() {
                     />
                   </div>
 
-                {/* MODIFICATION: Retrait de mt-auto, ajout de pt-4 pour l'espacement direct */}
                 <div className="pt-4 border-t border-border/50 flex flex-col gap-4">
                   {user && (
                     <div className="flex flex-col gap-3">

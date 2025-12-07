@@ -3,7 +3,11 @@
 import { prisma } from '@/lib/prisma';
 import { isCoachOrAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@clerk/nextjs/server'; // Ajout de l'import manquant
 
+/**
+ * Crée un nouvel événement (Course, Rassemblement, etc.)
+ */
 export async function createEvent(formData: FormData) {
   try {
     // 1. Vérification des permissions
@@ -35,6 +39,7 @@ export async function createEvent(formData: FormData) {
     // 4. Rafraîchir les caches
     revalidatePath('/planning');
     revalidatePath('/training');
+    revalidatePath('/sessions'); // Mis à jour pour la page d'historique
 
     return { success: true };
   } catch (error) {
@@ -43,22 +48,74 @@ export async function createEvent(formData: FormData) {
   }
 }
 
+/**
+ * Récupère les événements pour une date spécifique (utilisé par le calendrier)
+ */
 export async function getEventsByDate(dateStr: string) {
-    try {
-        const date = new Date(dateStr);
-        const startOfDay = new Date(date.setHours(0,0,0,0));
-        const endOfDay = new Date(date.setHours(23,59,59,999));
+  try {
+    const date = new Date(dateStr);
+    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
-        const events = await prisma.event.findMany({
-            where: {
-                eventDate: {
-                    gte: startOfDay,
-                    lte: endOfDay
-                }
-            }
-        });
-        return { success: true, events };
-    } catch (error) {
-        return { success: false, error: 'Error fetching events' };
+    const events = await prisma.event.findMany({
+      where: {
+        eventDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+    return { success: true, events };
+  } catch (error) {
+    console.error('Error fetching events by date:', error);
+    return { success: false, error: 'Error fetching events' };
+  }
+}
+
+/**
+ * Récupère tous les événements pour l'historique
+ */
+export async function getUserEvents() {
+  try {
+    // Vérification que l'utilisateur est connecté
+    const { userId } = await auth();
+    if (!userId) return { success: false, error: 'Non autorisé' };
+
+    const events = await prisma.event.findMany({
+      orderBy: {
+        eventDate: 'desc',
+      },
+    });
+
+    return { success: true, events };
+  } catch (error) {
+    console.error('Error fetching user events:', error);
+    return { success: false, error: 'Failed to fetch events' };
+  }
+}
+
+/**
+ * Supprime un événement
+ */
+export async function deleteEvent(eventId: string) {
+  try {
+    // Vérification des permissions (seul un coach/admin peut supprimer)
+    const hasPermission = await isCoachOrAdmin();
+    if (!hasPermission) {
+      return { success: false, error: 'Non autorisé' };
     }
+
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
+
+    // Rafraîchir les caches
+    revalidatePath('/planning');
+    revalidatePath('/sessions');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    return { success: false, error: 'Failed to delete event' };
+  }
 }
