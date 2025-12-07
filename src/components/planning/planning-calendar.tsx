@@ -42,7 +42,6 @@ export function PlanningCalendar() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
 
-      // On utilise l'action unifiée
       const result = await getPlanningData(year, month);
       
       if (result.success) {
@@ -73,18 +72,19 @@ export function PlanningCalendar() {
       return;
     }
 
-    // Retirer le focus sur mobile pour éviter le clavier virtuel ou zoom
+    // --- FIX MOBILE : Retirer le focus pour éviter le saut d'écran ---
+    // C'est ce bloc qui corrige la bande blanche en désactivant le focus du navigateur
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
 
     setSelectedDate(date);
     setLoading(true);
+    
+    // On ouvre le drawer immédiatement pour la réactivité visuelle
+    setDrawerOpen(true);
 
     try {
-      // --- CORRECTION TYPE SCRIPT ---
-      // On sépare bien les promesses pour que TS sache qui est qui.
-      
       // 1. Promesse pour les SÉANCES
       const sessionPromise = hasSession 
         ? getSessionsByDate(dateStr) 
@@ -95,14 +95,12 @@ export function PlanningCalendar() {
         ? getEventsByDate(dateStr) 
         : Promise.resolve({ success: true, events: [] as Event[] });
 
-      // 3. Exécution parallèle avec typage strict du tuple de retour
+      // 3. Exécution parallèle
       const [sessionResult, eventResult] = await Promise.all([sessionPromise, eventPromise]);
 
-      // Maintenant TS sait que sessionResult a .sessions et eventResult a .events
       setSessionsForDate(sessionResult.sessions || []);
       setEventsForDate(eventResult.events || []);
       
-      setDrawerOpen(true);
     } catch (error) {
       console.error('Error loading details:', error);
     } finally {
@@ -125,7 +123,8 @@ export function PlanningCalendar() {
 
   return (
     <div className="w-full sm:flex sm:justify-center">
-      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+      {/* Ajout de overflow-hidden pour éviter que le calendrier ne dépasse pendant l'animation */}
+      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg overflow-hidden">
         <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
@@ -141,7 +140,8 @@ export function PlanningCalendar() {
             locale={fr}
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
-            className="w-full"
+            // Ajout de touch-pan-y pour améliorer le comportement du scroll sur mobile
+            className="w-full touch-pan-y" 
             disabled={loading}
           />
         </div>
