@@ -156,9 +156,7 @@ export function SessionDrawer({
     );
   }
 
-  // LOGIQUE D'AFFICHAGE : LISTE ou DÉTAIL
-  // On affiche la liste s'il n'y a pas de session sélectionnée ET (plusieurs items OU 1 event + 1 session)
-  // Sinon, si une seule session et pas d'event, on affiche directement le détail.
+
   const showList = !selectedSession && (sessions.length + events.length > 0);
   const isMultiView = sessions.length + events.length > 1 || events.length > 0;
 
@@ -253,7 +251,7 @@ export function SessionDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto">
         {/* Bouton retour si on vient d'une liste mixte */}
         {isMultiView && (
           <button 
@@ -264,21 +262,21 @@ export function SessionDrawer({
           </button>
         )}
 
-        <SheetHeader className="mb-6">
-          <SheetTitle className="text-2xl">{session.name}</SheetTitle>
-          <SheetDescription className="text-base">
+        <SheetHeader>
+          <SheetTitle className="text-xl">{session.name}</SheetTitle>
+          <SheetDescription className="text-sm">
             {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
           </SheetDescription>
         </SheetHeader>
 
         {/* Indicateurs clés - Style Original */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="p-4 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Route className="h-4 w-4" />
               Distance
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {formatDistance(session.totalDistance)} km
             </div>
           </div>
@@ -287,7 +285,7 @@ export function SessionDrawer({
               <Clock className="h-4 w-4" />
               Durée
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {formatDuration(session.totalTime)}
             </div>
           </div>
