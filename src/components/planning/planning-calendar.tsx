@@ -128,9 +128,11 @@ export function PlanningCalendar() {
   return (
     <div className="w-full sm:flex sm:justify-center">
       <div className="w-full sm:max-w-md">
-        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
-          {/* Container avec hauteur minimale fixe pour le calendrier */}
-          <div className="relative w-full min-h-[320px] sm:min-h-[340px] flex items-start">
+        {/* Card avec Grid Layout : 2 zones fixes */}
+        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg grid grid-rows-[1fr_auto] gap-0">
+          
+          {/* Zone 1 : Calendrier (prend l'espace disponible) */}
+          <div className="relative w-full">
             {loadingDates && (
               <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
                 <div className="text-sm text-muted-foreground">Chargement...</div>
@@ -151,7 +153,7 @@ export function PlanningCalendar() {
             />
           </div>
           
-          {/* Légende fixe en bas de la Card */}
+          {/* Zone 2 : Légende (hauteur auto, toujours en bas) */}
           <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary" />
