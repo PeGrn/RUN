@@ -153,7 +153,7 @@ export function PlanningCalendar() {
                 cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 w-full",
                 day: cn(
                   "h-full w-full aspect-square p-0 font-normal aria-selected:opacity-100",
-                  "focus:outline-none focus:ring-0 focus:ring-offset-0", // Fix layout shift on focus
+                  "focus:outline-none focus:ring-0 focus:ring-offset-0", // Fix layout shift on focus !
                   "hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
                 ),
                 day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
