@@ -59,10 +59,17 @@ export function PlanningCalendar() {
     setCurrentMonth(date);
     // Désélectionner la date lors du changement de mois pour éviter les incohérences
     setSelectedDate(undefined);
+    
     // Blur pour fermer les claviers virtuels
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
+    
+    // Force un reflow pour recalculer le layout correctement
+    // Cela corrige le bug où la légende se retrouve au milieu
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
   };
 
   const handleDateClick = useCallback(async (date: Date | undefined) => {
@@ -129,9 +136,9 @@ export function PlanningCalendar() {
     <div className="w-full sm:flex sm:justify-center">
       <div className="w-full sm:max-w-md">
         {/* Card avec Grid Layout : 2 zones fixes */}
-        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg grid grid-rows-[1fr_auto] gap-0">
+        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg grid grid-rows-[minmax(300px,auto)_auto] gap-0">
           
-          {/* Zone 1 : Calendrier (prend l'espace disponible) */}
+          {/* Zone 1 : Calendrier (min 300px, s'adapte au contenu) */}
           <div className="relative w-full">
             {loadingDates && (
               <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
