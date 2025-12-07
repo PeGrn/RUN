@@ -135,33 +135,35 @@ export function PlanningCalendar() {
   return (
     <div className="w-full sm:flex sm:justify-center">
       <div className="w-full sm:max-w-md">
-        {/* Card avec Grid Layout : 2 zones fixes */}
-        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg grid grid-rows-[minmax(300px,auto)_auto] gap-0">
+        {/* Card avec Flexbox : meilleure gestion de l'espace */}
+        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg flex flex-col">
           
-          {/* Zone 1 : Calendrier (min 300px, s'adapte au contenu) */}
-          <div className="relative w-full">
+          {/* Zone 1 : Calendrier (flex-1 = prend l'espace, mais pas overlap) */}
+          <div className="relative w-full flex-shrink-0">
             {loadingDates && (
               <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
                 <div className="text-sm text-muted-foreground">Chargement...</div>
               </div>
             )}
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateClick}
-              month={currentMonth}
-              onMonthChange={handleMonthChange}
-              locale={fr}
-              modifiers={modifiers}
-              modifiersClassNames={modifiersClassNames}
-              className="w-full touch-pan-y"
-              disabled={disabledMatcher}
-              showOutsideDays={false}
-            />
+            <div className="pb-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateClick}
+                month={currentMonth}
+                onMonthChange={handleMonthChange}
+                locale={fr}
+                modifiers={modifiers}
+                modifiersClassNames={modifiersClassNames}
+                className="w-full touch-pan-y"
+                disabled={disabledMatcher}
+                showOutsideDays={false}
+              />
+            </div>
           </div>
           
-          {/* Zone 2 : Légende (hauteur auto, toujours en bas) */}
-          <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
+          {/* Zone 2 : Légende (flex-shrink-0 = ne rétrécit jamais) */}
+          <div className="pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary" />
               <span>Séance</span>
