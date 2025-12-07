@@ -9,35 +9,13 @@ import { SessionDrawer } from './session-drawer';
 import { Card } from '@/components/ui/card';
 import { fr } from 'date-fns/locale';
 import type { TrainingSession, Event } from '@prisma/client';
-
-// --- UTILITAIRES ---
+import { cn } from '@/lib/utils';
 
 const formatDateLocal = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-// Fonction pour calculer précisément le nombre de lignes (semaines) nécessaires
-const getWeeksInMonth = (date: Date): number => {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  
-  // Premier jour du mois
-  const firstDay = new Date(year, month, 1);
-  // Dernier jour du mois
-  const lastDay = new Date(year, month + 1, 0);
-  
-  // getDay() retourne 0 pour Dimanche, on veut 0 pour Lundi (fr)
-  // Dimanche (0) -> 6, Lundi (1) -> 0, Mardi (2) -> 1...
-  let firstDayIndex = firstDay.getDay() - 1;
-  if (firstDayIndex === -1) firstDayIndex = 6;
-  
-  const daysInMonth = lastDay.getDate();
-  
-  // Formule mathématique : (jours totaux + décalage du début) / 7 jours
-  return Math.ceil((daysInMonth + firstDayIndex) / 7);
 };
 
 export function PlanningCalendar() {
@@ -48,28 +26,19 @@ export function PlanningCalendar() {
   const [eventDates, setEventDates] = useState<string[]>([]);
   
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
   const [sessionsForDate, setSessionsForDate] = useState<TrainingSession[]>([]);
   const [eventsForDate, setEventsForDate] = useState<Event[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
 
-  // --- CALCUL DE HAUTEUR STABLE ---
-  const calendarContainerHeight = useMemo(() => {
-    const weeks = getWeeksInMonth(currentMonth);
-    // Hauteur approximative :
-    // - Header (Mois + Flèches) : ~60px
-    // - Jours de la semaine (Lun, Mar...) : ~40px
-    // - Lignes de jours (semaines) : ~48px par ligne (taille standard touch target)
-    // - Padding interne : ~20px
-    return 60 + 40 + (weeks * 48) + 20; 
-  }, [currentMonth]);
-
   const loadPlanning = useCallback(async () => {
     setLoadingDates(true);
     try {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
+
       const result = await getPlanningData(year, month);
       
       if (result.success) {
@@ -89,6 +58,7 @@ export function PlanningCalendar() {
 
   const handleMonthChange = (date: Date) => {
     setCurrentMonth(date);
+    // Fix Mobile: Retire le focus pour éviter les sauts de viewport
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
@@ -97,6 +67,7 @@ export function PlanningCalendar() {
   const handleDateClick = useCallback(async (date: Date | undefined) => {
     if (!date) return;
 
+    // Fix Mobile: Retire le focus du bouton cliqué
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
@@ -107,6 +78,7 @@ export function PlanningCalendar() {
 
     setSelectedDate(date);
 
+    // Si pas de données, on s'arrête là (juste sélection visuelle)
     if (!hasSession && !hasEvent) {
       return;
     }
@@ -148,46 +120,53 @@ export function PlanningCalendar() {
 
   return (
     <div className="w-full sm:flex sm:justify-center">
-      <Card className="flex flex-col p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg overflow-hidden transition-[height] duration-300 ease-in-out">
+      <Card className="flex flex-col gap-4 h-fit p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg overflow-hidden">
         
-        {/* CONTAINER À HAUTEUR EXPLICITE 
-           C'est ici que la magie opère : on force la hauteur avant le rendu du calendrier.
-        */}
-        <div 
-          className="relative w-full transition-[height] duration-300 ease-in-out"
-          style={{ height: `${calendarContainerHeight}px` }}
-        >
+        <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
-              <div className="text-sm text-muted-foreground animate-pulse">Chargement...</div>
+              <div className="text-sm text-muted-foreground">Chargement...</div>
             </div>
           )}
           
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateClick}
-            month={currentMonth}
-            onMonthChange={handleMonthChange}
-            locale={fr}
-            modifiers={modifiers}
-            modifiersClassNames={modifiersClassNames}
-            className="w-full touch-pan-y block"
-            disabled={loading}
-            // On s'assure que le calendrier prend toute la place disponible
-            classNames={{
-              month: "w-full space-y-4",
-              table: "w-full border-collapse space-y-1",
-              head_row: "flex",
-              row: "flex w-full mt-2",
-              cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-              day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-            }}
-          />
+          <div className="p-1">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateClick}
+              month={currentMonth}
+              onMonthChange={handleMonthChange}
+              locale={fr}
+              modifiers={modifiers}
+              modifiersClassNames={modifiersClassNames}
+              className="w-full touch-pan-y"
+              disabled={loading}
+              
+              // STYLES SURCHARGÉS POUR REMPLIR TOUTE LA CARTE
+              classNames={{
+                months: "w-full",
+                month: "w-full space-y-4",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex w-full",
+                head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 w-full",
+                day: cn(
+                  "h-full w-full aspect-square p-0 font-normal aria-selected:opacity-100",
+                  "focus:outline-none focus:ring-0 focus:ring-offset-0", // Fix layout shift on focus
+                  "hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+                ),
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "text-muted-foreground opacity-50",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_hidden: "invisible",
+              }}
+            />
+          </div>
         </div>
         
-        {/* Légende - Désormais stable car le bloc au-dessus a une hauteur fixe */}
-        <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
+        <div className="mt-auto flex justify-center gap-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <span>Séance</span>
