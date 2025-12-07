@@ -127,40 +127,43 @@ export function PlanningCalendar() {
 
   return (
     <div className="w-full sm:flex sm:justify-center">
-      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
-        <div className="relative w-full">
-          {loadingDates && (
-            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
-              <div className="text-sm text-muted-foreground">Chargement...</div>
+      <div className="w-full sm:max-w-md">
+        <Card className="p-2 sm:p-4 md:p-6 w-full border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+          {/* Container avec hauteur minimale fixe pour le calendrier */}
+          <div className="relative w-full min-h-[320px] sm:min-h-[340px] flex items-start">
+            {loadingDates && (
+              <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
+                <div className="text-sm text-muted-foreground">Chargement...</div>
+              </div>
+            )}
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateClick}
+              month={currentMonth}
+              onMonthChange={handleMonthChange}
+              locale={fr}
+              modifiers={modifiers}
+              modifiersClassNames={modifiersClassNames}
+              className="w-full touch-pan-y"
+              disabled={disabledMatcher}
+              showOutsideDays={false}
+            />
+          </div>
+          
+          {/* Légende fixe en bas de la Card */}
+          <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary" />
+              <span>Séance</span>
             </div>
-          )}
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateClick}
-            month={currentMonth}
-            onMonthChange={handleMonthChange}
-            locale={fr}
-            modifiers={modifiers}
-            modifiersClassNames={modifiersClassNames}
-            className="w-full touch-pan-y"
-            disabled={disabledMatcher}
-            showOutsideDays={false}
-          />
-        </div>
-        
-        {/* Légende fixe en bas de la Card */}
-        <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span>Séance</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-orange-500" />
+              <span>Événement</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-orange-500" />
-            <span>Événement</span>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       <SessionDrawer
         open={drawerOpen}
