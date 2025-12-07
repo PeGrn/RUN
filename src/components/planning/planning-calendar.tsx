@@ -10,7 +10,6 @@ import { Card } from '@/components/ui/card';
 import { fr } from 'date-fns/locale';
 import type { TrainingSession, Event } from '@prisma/client';
 
-// Fonction helper pour normaliser une date en format YYYY-MM-DD sans timezone
 const formatDateLocal = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -22,20 +21,17 @@ export function PlanningCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
-  // États pour les dates marquées
   const [sessionDates, setSessionDates] = useState<string[]>([]);
   const [eventDates, setEventDates] = useState<string[]>([]);
   
   const [drawerOpen, setDrawerOpen] = useState(false);
   
-  // Données détaillées pour le Drawer
   const [sessionsForDate, setSessionsForDate] = useState<TrainingSession[]>([]);
   const [eventsForDate, setEventsForDate] = useState<Event[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
 
-  // Charger les dates (Séances + Événements) quand le mois change
   const loadPlanning = useCallback(async () => {
     setLoadingDates(true);
     try {
@@ -59,7 +55,14 @@ export function PlanningCalendar() {
     loadPlanning();
   }, [loadPlanning]);
 
-  // Gérer le clic sur une date
+  const handleMonthChange = (date: Date) => {
+    setCurrentMonth(date);
+    // Le blur reste utile pour fermer les claviers virtuels éventuels
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  };
+
   const handleDateClick = useCallback(async (date: Date | undefined) => {
     if (!date) return;
 
@@ -67,40 +70,37 @@ export function PlanningCalendar() {
     const hasSession = sessionDates.includes(dateStr);
     const hasEvent = eventDates.includes(dateStr);
 
-    // Ne rien faire s'il n'y a rien sur cette date
     if (!hasSession && !hasEvent) {
+       if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        (document.activeElement as HTMLElement)?.blur();
+      }
+      setSelectedDate(date);
       return;
     }
 
-    // --- FIX MOBILE : Retirer le focus pour éviter le saut d'écran ---
-    // C'est ce bloc qui corrige la bande blanche en désactivant le focus du navigateur
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
 
     setSelectedDate(date);
     setLoading(true);
-    
-    // On ouvre le drawer immédiatement pour la réactivité visuelle
-    setDrawerOpen(true);
 
     try {
-      // 1. Promesse pour les SÉANCES
       const sessionPromise = hasSession 
         ? getSessionsByDate(dateStr) 
         : Promise.resolve({ success: true, sessions: [] as TrainingSession[] });
 
-      // 2. Promesse pour les ÉVÉNEMENTS
       const eventPromise = hasEvent 
         ? getEventsByDate(dateStr) 
         : Promise.resolve({ success: true, events: [] as Event[] });
 
-      // 3. Exécution parallèle
       const [sessionResult, eventResult] = await Promise.all([sessionPromise, eventPromise]);
 
       setSessionsForDate(sessionResult.sessions || []);
       setEventsForDate(eventResult.events || []);
       
+      setDrawerOpen(true);
+
     } catch (error) {
       console.error('Error loading details:', error);
     } finally {
@@ -108,23 +108,25 @@ export function PlanningCalendar() {
     }
   }, [sessionDates, eventDates]);
 
-  // Configuration des indicateurs visuels
   const modifiers = useMemo(() => ({
     hasSession: (date: Date) => sessionDates.includes(formatDateLocal(date)),
     hasEvent: (date: Date) => eventDates.includes(formatDateLocal(date)),
   }), [sessionDates, eventDates]);
 
   const modifiersClassNames = useMemo(() => ({
-    // Point Bleu (Séance) : Centré en bas
     hasSession: 'relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full',
-    // Point Orange (Événement) : Coin haut droit
     hasEvent: 'relative before:absolute before:top-1 before:right-1 before:w-1.5 before:h-1.5 before:bg-orange-500 before:rounded-full',
   }), []);
 
   return (
     <div className="w-full sm:flex sm:justify-center">
-      {/* Ajout de overflow-hidden pour éviter que le calendrier ne dépasse pendant l'animation */}
-      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg overflow-hidden">
+      {/* 
+        CORRECTION MAJEURE :
+        1. h-fit : permet à la carte de s'adapter au contenu sans couper.
+        2. Suppression de overflow-hidden : pour ne jamais masquer les semaines.
+        3. min-h-[420px] : hauteur légèrement augmentée pour accueillir les 6 semaines fixes.
+      */}
+      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg min-h-[420px] h-fit">
         <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
@@ -136,17 +138,21 @@ export function PlanningCalendar() {
             selected={selectedDate}
             onSelect={handleDateClick}
             month={currentMonth}
-            onMonthChange={setCurrentMonth}
+            onMonthChange={handleMonthChange}
             locale={fr}
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
-            // Ajout de touch-pan-y pour améliorer le comportement du scroll sur mobile
-            className="w-full touch-pan-y" 
+            className="w-full touch-pan-y"
             disabled={loading}
+            // --- FIX ULTIME ---
+            // fixedWeeks force l'affichage de 6 semaines quel que soit le mois.
+            // showOutsideDays affiche les jours grisés du mois précédent/suivant.
+            // Cela garantit que la hauteur du calendrier NE CHANGE JAMAIS.
+            fixedWeeks
+            showOutsideDays={true}
           />
         </div>
         
-        {/* Légende rapide */}
         <div className="mt-4 flex justify-center gap-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
