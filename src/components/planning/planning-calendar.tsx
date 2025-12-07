@@ -57,7 +57,9 @@ export function PlanningCalendar() {
 
   const handleMonthChange = (date: Date) => {
     setCurrentMonth(date);
-    // Le blur reste utile pour fermer les claviers virtuels éventuels
+    // Désélectionner la date lors du changement de mois pour éviter les incohérences
+    setSelectedDate(undefined);
+    // Blur pour fermer les claviers virtuels
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
@@ -70,19 +72,18 @@ export function PlanningCalendar() {
     const hasSession = sessionDates.includes(dateStr);
     const hasEvent = eventDates.includes(dateStr);
 
-    if (!hasSession && !hasEvent) {
-       if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        (document.activeElement as HTMLElement)?.blur();
-      }
-      setSelectedDate(date);
-      return;
-    }
-
+    // Blur pour mobile
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
 
     setSelectedDate(date);
+
+    // Si aucune session ou événement, pas besoin de charger
+    if (!hasSession && !hasEvent) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -120,13 +121,7 @@ export function PlanningCalendar() {
 
   return (
     <div className="w-full sm:flex sm:justify-center">
-      {/* 
-        CORRECTION MAJEURE :
-        1. h-fit : permet à la carte de s'adapter au contenu sans couper.
-        2. Suppression de overflow-hidden : pour ne jamais masquer les semaines.
-        3. min-h-[420px] : hauteur légèrement augmentée pour accueillir les 6 semaines fixes.
-      */}
-      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg min-h-[420px] h-fit">
+      <Card className="p-2 sm:p-4 md:p-6 w-full sm:max-w-md border-0 sm:border shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
         <div className="relative w-full">
           {loadingDates && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-md">
@@ -144,16 +139,12 @@ export function PlanningCalendar() {
             modifiersClassNames={modifiersClassNames}
             className="w-full touch-pan-y"
             disabled={loading}
-            // --- FIX ULTIME ---
-            // fixedWeeks force l'affichage de 6 semaines quel que soit le mois.
-            // showOutsideDays affiche les jours grisés du mois précédent/suivant.
-            // Cela garantit que la hauteur du calendrier NE CHANGE JAMAIS.
-            fixedWeeks
-            showOutsideDays={true}
+            showOutsideDays={false}
           />
         </div>
         
-        <div className="mt-4 flex justify-center gap-6 text-xs text-muted-foreground">
+        {/* Légende fixe en bas de la Card */}
+        <div className="mt-4 pt-4 border-t flex justify-center gap-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <span>Séance</span>
