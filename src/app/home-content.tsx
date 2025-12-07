@@ -32,7 +32,6 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// --- NOUVELLE FONCTION ---
 // Formate la distance : "200m" ou "1.50km"
 function formatDistance(meters: number): string {
   if (meters < 1000) {
@@ -55,7 +54,6 @@ function generateSessionSummary(elements: TrainingElement[]): string {
     summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
 
     block.steps.forEach((step, stepIdx) => {
-      // --- MODIFICATION ICI : Utilisation de formatDistance ---
       const distance = formatDistance(step.distance);
       const intensity = `${step.vmaPercentage}% VMA`;
       const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
@@ -122,7 +120,6 @@ function SessionCard({ session }: SessionCardProps) {
                 Distance
               </div>
               <div className="text-xl font-bold">
-                {/* --- MODIFICATION ICI AUSSI POUR LA COHÉRENCE --- */}
                 {formatDistance(session.totalDistance)}
               </div>
             </div>
@@ -224,7 +221,8 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
           // Vue utilisateur connecté
           <div className="max-w-5xl mx-auto space-y-8">
             {/* En-tête de semaine avec navigation */}
-            <div className="flex items-center justify-between">
+            {/* MODIFICATION : flex-col sur mobile pour que les boutons passent dessous */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight">{weekLabel}</h2>
@@ -237,12 +235,14 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* MODIFICATION : w-full sur mobile pour prendre toute la largeur */}
+              <div className="flex items-center gap-2 w-full md:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowingNextWeek(false)}
                   disabled={!showingNextWeek}
+                  className="flex-1 md:flex-none" // flex-1 pour équilibrer la largeur sur mobile
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Semaine actuelle
@@ -254,6 +254,7 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                     size="sm"
                     onClick={() => setShowingNextWeek(true)}
                     disabled={showingNextWeek}
+                    className="flex-1 md:flex-none" // flex-1 pour équilibrer la largeur sur mobile
                   >
                     Semaine prochaine
                     <ChevronRight className="h-4 w-4 ml-1" />

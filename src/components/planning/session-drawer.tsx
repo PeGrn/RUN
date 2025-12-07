@@ -28,8 +28,12 @@ const formatDuration = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+// MODIFICATION : Gestion m/km
 const formatDistance = (meters: number): string => {
-  return (meters / 1000).toFixed(2);
+  if (meters < 1000) {
+    return `${Math.round(meters)}m`;
+  }
+  return `${(meters / 1000).toFixed(2)} km`;
 };
 
 const generateSessionSummary = (elements: TrainingElement[]): string => {
@@ -45,7 +49,8 @@ const generateSessionSummary = (elements: TrainingElement[]): string => {
     summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
 
     block.steps.forEach((step, stepIdx) => {
-      const distance = `${(step.distance / 1000).toFixed(2)} km`;
+      // MODIFICATION : Utilisation du format intelligent ici aussi
+      const distance = formatDistance(step.distance);
       const intensity = `${step.vmaPercentage}% VMA`;
       const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
       const stepName = step.name || `Étape ${stepIdx + 1}`;
@@ -147,7 +152,7 @@ export function SessionDrawer({
   if (loading) {
     return (
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+        <SheetContent side="bottom" className="max-h-[50dvh] z-[200]">
           <div className="flex items-center justify-center py-8">
             <div className="text-muted-foreground">Chargement...</div>
           </div>
@@ -156,7 +161,7 @@ export function SessionDrawer({
     );
   }
 
-
+  // LOGIQUE D'AFFICHAGE
   const showList = !selectedSession && (sessions.length + events.length > 0);
   const isMultiView = sessions.length + events.length > 1 || events.length > 0;
 
@@ -164,7 +169,7 @@ export function SessionDrawer({
   if (showList && isMultiView) {
     return (
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto z-[200]">
           <SheetHeader className="mb-4">
             <SheetTitle>
               {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -176,7 +181,7 @@ export function SessionDrawer({
           </SheetHeader>
 
           <div className="space-y-6">
-            {/* SECTION ÉVÉNEMENTS (NOUVEAU STYLE CONSERVÉ) */}
+            {/* SECTION ÉVÉNEMENTS */}
             {events.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Événements</h3>
@@ -204,7 +209,7 @@ export function SessionDrawer({
               </div>
             )}
 
-            {/* SECTION SÉANCES (STYLE D'ORIGINE RESTAURÉ) */}
+            {/* SECTION SÉANCES */}
             {sessions.length > 0 && (
               <div className="space-y-3">
                 {events.length > 0 && (
@@ -221,7 +226,8 @@ export function SessionDrawer({
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Route className="h-4 w-4" />
-                          {formatDistance(session.totalDistance)} km
+                          {/* MODIFICATION ICI */}
+                          {formatDistance(session.totalDistance)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
@@ -240,7 +246,7 @@ export function SessionDrawer({
     );
   }
 
-  // --- VUE DÉTAIL SÉANCE (STYLE D'ORIGINE RESTAURÉ) ---
+  // --- VUE DÉTAIL SÉANCE ---
   const session = selectedSession || (sessions.length === 1 ? sessions[0] : null);
 
   if (!session) {
@@ -251,86 +257,84 @@ export function SessionDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto">
-        {/* Bouton retour si on vient d'une liste mixte */}
-        {isMultiView && (
-          <button 
-            onClick={() => setSelectedSession(null)}
-            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 -ml-1"
-          >
-            <ChevronRight className="h-4 w-4 rotate-180" /> Retour
-          </button>
-        )}
-
-        <SheetHeader>
-          <SheetTitle className="text-xl">{session.name}</SheetTitle>
-          <SheetDescription className="text-sm">
-            {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
-          </SheetDescription>
-        </SheetHeader>
-
-        {/* Indicateurs clés - Style Original */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="p-4 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Route className="h-4 w-4" />
-              Distance
+      <SheetContent side="bottom" className="max-h-[90dvh] w-full z-[200] overflow-y-auto flex flex-col">
+        
+        {/* Header avec bouton retour */}
+        <div className="mb-6 shrink-0">
+            {isMultiView && (
+                <button 
+                    onClick={() => setSelectedSession(null)}
+                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 -ml-1 py-2"
+                >
+                    <ChevronRight className="h-4 w-4 rotate-180" /> Retour au planning du jour
+                </button>
+            )}
+            
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <SheetTitle className="text-2xl font-bold text-primary">
+                        {session.name}
+                    </SheetTitle>
+                    <SheetDescription className="mt-1">
+                        {selectedDate && format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+                    </SheetDescription>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <Badge variant="secondary" className="font-mono">
+                        {/* MODIFICATION ICI */}
+                        {formatDistance(session.totalDistance)}
+                    </Badge>
+                    <Badge variant="outline" className="font-mono">
+                        {formatDuration(session.totalTime)}
+                    </Badge>
+                </div>
             </div>
-            <div className="text-xl font-bold">
-              {formatDistance(session.totalDistance)} km
-            </div>
-          </div>
-          <div className="p-4 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Clock className="h-4 w-4" />
-              Durée
-            </div>
-            <div className="text-xl font-bold">
-              {formatDuration(session.totalTime)}
-            </div>
-          </div>
         </div>
 
-        {/* Description - Style Original */}
-        {session.description && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-muted-foreground">{session.description}</p>
-          </div>
-        )}
+        {/* Contenu défilable */}
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+            {session.description && (
+                <div className="mb-6 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <p className="text-sm text-muted-foreground italic">
+                        &quot;{session.description}&quot;
+                    </p>
+                </div>
+            )}
 
-        {/* Détails de la séance - Style Original */}
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Programme</h3>
-          <div className="p-4 rounded-lg bg-muted/30 text-sm whitespace-pre-line font-mono">
-            {generateSessionSummary(sessionSteps)}
-          </div>
+            <div className="space-y-3 mb-8">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+                    Détail de la séance
+                </h3>
+                <div className="text-sm font-mono leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-4 rounded-lg border">
+                    <pre className="whitespace-pre-wrap font-sans">
+                        {generateSessionSummary(sessionSteps)}
+                    </pre>
+                </div>
+            </div>
         </div>
 
-        {/* Boutons d'actions - Style Original */}
-        <div className="sticky bottom-0 left-0 right-0 pt-4 pb-2 bg-background border-t -mx-6 px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              onClick={() => handleDownloadPdf(session.id, session.name)}
-              className="w-full"
-              size="lg"
-              disabled={downloading || sending}
-              variant="default"
-            >
-              <Download className="mr-2 h-5 w-5" />
-              {downloading ? 'Téléchargement...' : 'Télécharger'}
-            </Button>
-            <Button
-              onClick={() => handleSendEmail(session.id, session.name)}
-              className="w-full"
-              size="lg"
-              disabled={downloading || sending}
-              variant="outline"
-            >
-              <Mail className="mr-2 h-5 w-5" />
-              {sending ? 'Envoi...' : 'Envoyer par email'}
-            </Button>
-          </div>
+        {/* Footer Actions (Sticky) */}
+        <div className="pt-4 mt-auto border-t bg-background sticky bottom-0 z-10 shrink-0">
+            <div className="grid grid-cols-2 gap-3">
+                <Button 
+                    variant="default" 
+                    onClick={() => handleDownloadPdf(session.id, session.name)}
+                    disabled={downloading}
+                    className="w-full"
+                >
+                    {downloading ? <span className="animate-pulse">...</span> : <Download className="h-4 w-4 mr-2" />}
+                    PDF
+                </Button>
+                <Button 
+                    variant="outline"
+                    onClick={() => handleSendEmail(session.id, session.name)}
+                    disabled={sending}
+                    className="w-full"
+                >
+                    {sending ? <span className="animate-pulse">...</span> : <Mail className="h-4 w-4 mr-2" />}
+                    Email
+                </Button>
+            </div>
         </div>
       </SheetContent>
     </Sheet>
