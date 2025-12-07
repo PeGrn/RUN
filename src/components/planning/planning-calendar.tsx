@@ -9,7 +9,6 @@ import { SessionDrawer } from './session-drawer';
 import { Card } from '@/components/ui/card';
 import { fr } from 'date-fns/locale';
 import type { TrainingSession, Event } from '@prisma/client';
-import { cn } from '@/lib/utils';
 
 const formatDateLocal = (date: Date): string => {
   const year = date.getFullYear();
@@ -58,7 +57,6 @@ export function PlanningCalendar() {
 
   const handleMonthChange = (date: Date) => {
     setCurrentMonth(date);
-    // Fix Mobile: Retire le focus pour éviter les sauts de viewport
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
@@ -67,7 +65,6 @@ export function PlanningCalendar() {
   const handleDateClick = useCallback(async (date: Date | undefined) => {
     if (!date) return;
 
-    // Fix Mobile: Retire le focus du bouton cliqué
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       (document.activeElement as HTMLElement)?.blur();
     }
@@ -78,7 +75,6 @@ export function PlanningCalendar() {
 
     setSelectedDate(date);
 
-    // Si pas de données, on s'arrête là (juste sélection visuelle)
     if (!hasSession && !hasEvent) {
       return;
     }
@@ -139,28 +135,24 @@ export function PlanningCalendar() {
               locale={fr}
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
-              className="w-full touch-pan-y"
               disabled={loading}
               
-              // STYLES SURCHARGÉS POUR REMPLIR TOUTE LA CARTE
+              // --- CORRECTION ---
+              // 1. On donne 'w-full' au composant lui-même pour qu'il prenne toute la largeur
+              // 2. On surcharge SEULEMENT la variable CSS de taille pour agrandir les cases
+              //    sans casser la structure flex interne du composant.
+              //    2.5rem (40px) est la base, on peut mettre plus ou '100%' si géré.
+              //    Ici, 'w-full' suffit souvent car votre composant Calendar a déjà flex-1 sur les jours.
+              className="w-full touch-pan-y"
+              
+              // On supprime l'énorme bloc classNames={{...}} qui cassait le layout.
+              // On garde juste un petit fix pour éviter le saut de focus sur le bouton du jour.
               classNames={{
-                months: "w-full",
-                month: "w-full space-y-4",
-                table: "w-full border-collapse space-y-1",
-                head_row: "flex w-full",
-                head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
+                day: "h-9 w-9 sm:h-10 sm:w-10 p-0 font-normal aria-selected:opacity-100 focus:outline-none focus:ring-0 focus:ring-offset-0 flex-1 aspect-square",
+                // On s'assure que les lignes prennent toute la largeur
                 row: "flex w-full mt-2",
-                cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 w-full",
-                day: cn(
-                  "h-full w-full aspect-square p-0 font-normal aria-selected:opacity-100",
-                  "focus:outline-none focus:ring-0 focus:ring-offset-0", // Fix layout shift on focus !
-                  "hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                ),
-                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                day_today: "bg-accent text-accent-foreground",
-                day_outside: "text-muted-foreground opacity-50",
-                day_disabled: "text-muted-foreground opacity-50",
-                day_hidden: "invisible",
+                head_row: "flex w-full",
+                head_cell: "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem]",
               }}
             />
           </div>
