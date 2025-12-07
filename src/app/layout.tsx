@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ESL Team - Entraînement VMA et Métriques Garmin",
-  description: "Créez des plans d'entraînement VMA personnalisés et suivez vos performances avec Garmin Connect",
+  title: "ESL Team - Plan d'entraînement et vie du club",
+  description: "Création de plans d'entraînement personnalisés et gestion de la vie du club pour la Team ESL.",
 };
 
 export default function RootLayout({
