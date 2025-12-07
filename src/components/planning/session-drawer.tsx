@@ -253,7 +253,7 @@ export function SessionDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
         {/* Bouton retour si on vient d'une liste mixte */}
         {isMultiView && (
           <button 
