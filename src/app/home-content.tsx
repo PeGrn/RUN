@@ -193,11 +193,9 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                           {getIntensityLabel(step.vmaPercentage)}
                         </span>
                         
-                        {step.rest && step.rest !== '0"' && (
-                           <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
-                             <span className="text-[10px]">R:</span> {step.rest}
-                           </div>
-                        )}
+                        <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span className="text-[10px]">R:</span> {(!step.rest || step.rest === '0"' || step.rest === '0') ? "0" : step.rest}
+                        </div>
                       </div>
                     </div>
                   );

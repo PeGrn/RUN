@@ -12,6 +12,17 @@ function formatTime(seconds: number): string {
 }
 
 /**
+ * Format speed to Pace (MM'SS/km)
+ */
+function formatPace(speedKmh: number): string {
+  if (!speedKmh || speedKmh <= 0) return "-";
+  const secondsPerKm = 3600 / speedKmh;
+  const mins = Math.floor(secondsPerKm / 60);
+  const secs = Math.round(secondsPerKm % 60);
+  return `${mins}'${secs.toString().padStart(2, '0')}/km`;
+}
+
+/**
  * Calculate target time for a step at a specific VMA
  */
 function calculateTimeForVMA(
@@ -20,8 +31,20 @@ function calculateTimeForVMA(
   vma: number
 ): string {
   const speed = vma * vmaMultiplier;
+  if (speed <= 0) return "-";
   const timeInSeconds = (distance / 1000 / speed) * 3600;
   return formatTime(timeInSeconds);
+}
+
+/**
+ * Calculate target PACE for a step at a specific VMA
+ */
+function calculatePaceForVMA(
+  vmaMultiplier: number,
+  vma: number
+): string {
+  const speed = vma * vmaMultiplier;
+  return formatPace(speed);
 }
 
 /**
@@ -39,7 +62,7 @@ function createPDFDocument(
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  // const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
   
   // --- CONFIGURATION DES TAILLES FIXES ---
@@ -62,7 +85,7 @@ function createPDFDocument(
   interface ColumnInfo {
     type: 'vma' | 'block-indicator' | 'step';
     stepName?: string;
-    distance?: string;
+    headerLabel?: string; // Distance ou Durée
     rest?: string;
     blockReps?: number;
     stepIndex?: number;
@@ -77,12 +100,20 @@ function createPDFDocument(
     });
 
     block.steps.forEach((step) => {
+      // Déterminer le label de l'entête (Distance ou Durée)
+      let headerLabel = "";
+      if (step.type === 'time') {
+         headerLabel = step.duration || "00:00";
+      } else {
+         headerLabel = step.distance >= 1000
+          ? `${(step.distance / 1000).toFixed(1)}km`
+          : `${step.distance}m`;
+      }
+
       columns.push({
         type: 'step',
         stepName: step.name || 'STEP',
-        distance: step.distance >= 1000
-          ? `${(step.distance / 1000).toFixed(1)}km`
-          : `${step.distance}m`,
+        headerLabel: headerLabel,
         rest: step.rest
       });
     });
@@ -98,13 +129,13 @@ function createPDFDocument(
   const remainingWidthForSteps = availableWidth - fixedUsedWidth;
 
   // Calcul de la largeur dynamique
-  let dynamicStepWidth = remainingWidthForSteps / (numStepColumns || 1);
+  const dynamicStepWidth = remainingWidthForSteps / (numStepColumns || 1);
   
   // Limites pour la largeur
   const MIN_STEP_WIDTH = 10;
-  const MAX_STEP_WIDTH = 45; // Augmenté pour permettre un gros zoom si peu de colonnes
+  const MAX_STEP_WIDTH = 45;
 
-  let finalStepColWidth = Math.min(Math.max(dynamicStepWidth, MIN_STEP_WIDTH), MAX_STEP_WIDTH);
+  const finalStepColWidth = Math.min(Math.max(dynamicStepWidth, MIN_STEP_WIDTH), MAX_STEP_WIDTH);
 
   // --- CALCUL DU ZOOM DE LA POLICE ---
   const widthRatio = finalStepColWidth / MIN_STEP_WIDTH;
@@ -120,7 +151,7 @@ function createPDFDocument(
 
   // Recalcul de la largeur réelle finale du tableau pour le centrage
   const totalTableWidth = fixedUsedWidth + (numStepColumns * finalStepColWidth);
-  let startX = (pageWidth - totalTableWidth) / 2;
+  const startX = (pageWidth - totalTableWidth) / 2;
 
 
   // --- DESSIN DU TABLEAU ---
@@ -157,10 +188,10 @@ function createPDFDocument(
       doc.setFillColor(240, 240, 240);
       doc.rect(currentX, yPos, colWidth, 12, 'FD');
 
-      const line1 = `${col.distance}`;
+      const line1 = col.headerLabel || "";
       const line2 = `r = ${col.rest}`;
 
-      // Distance (taille dynamique)
+      // Distance ou Durée (Ligne 1)
       doc.setFont(undefined, 'bold');
       doc.setFontSize(dynamicHeaderFontSize + 1);
       doc.text(line1, currentX + colWidth / 2, yPos + 4, {
@@ -169,7 +200,7 @@ function createPDFDocument(
         maxWidth: colWidth - 2
       });
 
-      // Récupération (taille dynamique)
+      // Récupération (Ligne 2)
       doc.setFont(undefined, 'bold'); 
       doc.setFontSize(dynamicHeaderFontSize);
       doc.text(line2, currentX + colWidth / 2, yPos + 8.5, {
@@ -187,9 +218,9 @@ function createPDFDocument(
   doc.setFont(undefined, 'normal');
   
   vmaRange.forEach((vma, rowIndex) => {
-    // ALTERNANCE COULEURS : Gris plus foncé (230) vs Blanc (255)
+    // ALTERNANCE COULEURS
     if (rowIndex % 2 === 0) {
-      doc.setFillColor(230, 230, 230); // C'était 250, mis à 230 pour plus de contraste
+      doc.setFillColor(230, 230, 230);
     } else {
       doc.setFillColor(255, 255, 255);
     }
@@ -221,9 +252,18 @@ function createPDFDocument(
 
         if (stepIndex < trainingSteps.length) {
           const step = trainingSteps[stepIndex];
-          const time = calculateTimeForVMA(step.distance, step.vmaMultiplier, vma);
+          let cellText = "";
 
-          doc.text(time, currentX + colWidth / 2, yPos + rowHeight / 2, {
+          // CALCUL DYNAMIQUE SELON LE TYPE D'ÉTAPE
+          if (step.type === 'time') {
+             // Si c'est une durée -> on affiche l'allure cible (min/km)
+             cellText = calculatePaceForVMA(step.vmaMultiplier, vma);
+          } else {
+             // Si c'est une distance -> on affiche le temps cible (MM:SS)
+             cellText = calculateTimeForVMA(step.distance, step.vmaMultiplier, vma);
+          }
+
+          doc.text(cellText, currentX + colWidth / 2, yPos + rowHeight / 2, {
             align: 'center',
             baseline: 'middle'
           });
