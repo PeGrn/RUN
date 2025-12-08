@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from "next/link";
 import { 
   CalendarDays, 
@@ -15,15 +15,20 @@ import {
   Repeat, 
   Activity, 
   Flag, 
-  Beer 
+  Beer,
+  BarChart3,
+  List
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { TrainingSession, Event } from "@prisma/client";
 import type { TrainingElement } from "@/lib/vma";
+import { calculateVMAProgram, convertBuilderElementsToSteps } from "@/lib/vma";
+import { SpeedChart } from "@/components/training/charts/speed-chart";
 import { cn } from "@/lib/utils";
 import { VmaDialog } from '@/components/settings/vma-dialog';
 
@@ -57,7 +62,6 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)}km`;
 }
 
-// Calcul de l'allure (min/km)
 function formatPace(speedKmh: number): string {
   if (!speedKmh || speedKmh <= 0) return "";
   const secondsPerKm = 3600 / speedKmh;
@@ -66,10 +70,9 @@ function formatPace(speedKmh: number): string {
   return `${mins}'${secs.toString().padStart(2, '0')}/km`;
 }
 
-// NOUVELLE FONCTION : Calcul du temps de passage au 200m
 function calculateSplit200m(speedKmh: number): string {
   if (speedKmh <= 0) return "";
-  const seconds = (0.2 / speedKmh) * 3600; // Temps pour 0.2 km
+  const seconds = (0.2 / speedKmh) * 3600;
   const rounded = Math.round(seconds);
   if (rounded < 60) return `${rounded}"`;
   return formatTime(rounded);
@@ -101,65 +104,54 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
   if (!elements || elements.length === 0) return <p className="text-sm text-muted-foreground">Aucun détail</p>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       {elements.map((block, blockIndex) => {
         const isRepetition = block.repetitions > 1;
 
         return (
           <div key={blockIndex} className="flex gap-3">
-            {/* Badge Numéro du Bloc */}
             <div className="flex-shrink-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
                 {blockIndex + 1}
               </div>
             </div>
 
-            {/* Contenu du Bloc */}
             <div className="flex-1 space-y-2">
               <div className={cn("relative flex flex-col gap-2", isRepetition && "pr-12")}>
                 
                 {block.steps.map((step, stepIndex) => {
                   const isTimeBased = step.type === 'time';
                   const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
-                  
-                  // Calcul de l'allure cible
                   const targetPace = (userVma && speed > 0) ? formatPace(speed) : null;
-
-                  // Déterminer la valeur principale à afficher
                   const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
                   
-                  // Calculer la valeur secondaire et les splits
                   let secondaryValue = null;
-                  let effectiveDistance = step.distance; // Distance estimée ou réelle pour le split 200m
+                  let effectiveDistance = step.distance;
 
                   if (userVma && speed > 0) {
                     if (isTimeBased) {
-                      // Temps -> Dist
                       let seconds = 0;
-                      if (step.duration.includes(':')) {
+                      if (step.duration && step.duration.includes(':')) {
                         const [m, s] = step.duration.split(':').map(Number);
                         seconds = (m || 0) * 60 + (s || 0);
-                      } else {
+                      } else if (step.duration) {
                         seconds = parseFloat(step.duration) * 60;
                       }
                       effectiveDistance = (seconds * speed * 1000) / 3600;
                       secondaryValue = `~${formatDistance(effectiveDistance)}`;
                     } else {
-                      // Dist -> Temps
                       effectiveDistance = step.distance;
                       const timeSeconds = (step.distance / 1000 / speed) * 3600;
                       secondaryValue = formatTime(timeSeconds);
                     }
                   }
 
-                  // Calcul du Split 200m si la distance > 200m
                   const split200 = (userVma && speed > 0 && effectiveDistance > 200) 
                     ? calculateSplit200m(speed) 
                     : null;
 
                   return (
                     <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
-                      {/* Gauche: Consigne + Temps/Dist + Allure + Split */}
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-800 text-sm">
                           {mainValue}
@@ -177,9 +169,8 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                               <span>)</span>
                             </span>
                             
-                            {/* AJOUT : Temps de passage 200m */}
                             {split200 && (
-                              <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded whitespace-nowrap" title="Temps de passage au 200m">
+                              <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded whitespace-nowrap">
                                 200m: {split200}
                               </span>
                             )}
@@ -191,7 +182,6 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                         )}
                       </div>
 
-                      {/* Droite: Intensité / Récup */}
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 sm:mt-0">
                         {secondaryValue && (
                            <span className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
@@ -213,7 +203,6 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                   );
                 })}
 
-                {/* Badge Répétition */}
                 {isRepetition && (
                   <div className="absolute top-1/2 -right-0 -translate-y-1/2 flex flex-col items-center gap-1">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white shadow-md">
@@ -242,6 +231,15 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
 function SessionCard({ session, userVma }: { session: TrainingSession, userVma: number | null }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
+
+  // Calcul du programme complet pour le graphique
+  const program = useMemo(() => {
+    if (!sessionSteps.length) return null;
+    const steps = convertBuilderElementsToSteps(sessionSteps);
+    // Utiliser la VMA utilisateur si dispo, sinon une valeur par défaut pour visualiser l'intensité
+    const calcVma = userVma || 15;
+    return calculateVMAProgram(steps, calcVma);
+  }, [sessionSteps, userVma]);
 
   return (
     <Card className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
@@ -277,7 +275,8 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-8">
+          {/* Stats rapides */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="p-3 rounded-lg bg-white border shadow-sm">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
                 <Route className="h-3 w-3" />
@@ -298,14 +297,43 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
             </div>
           </div>
 
+          {/* Système d'Onglets : Détail vs Graphique */}
           {sessionSteps.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider text-muted-foreground">
-                Détail de la séance
-                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
-              </h4>
-              <ProgramSteps elements={sessionSteps} userVma={userVma} />
-            </div>
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="details" className="flex items-center gap-2">
+                  <List className="h-4 w-4" />
+                  <span className="hidden sm:inline">Détail</span>
+                  <span className="sm:hidden">Détail</span>
+                </TabsTrigger>
+                <TabsTrigger value="graph" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Graphique</span>
+                  <span className="sm:hidden">Graphique</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="mt-0">
+                {!userVma && (
+                  <div className="mb-4 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100 flex items-center justify-center">
+                    ⚠️ Configurez votre VMA pour voir vos allures personnalisées
+                  </div>
+                )}
+                <ProgramSteps elements={sessionSteps} userVma={userVma} />
+              </TabsContent>
+              
+              <TabsContent value="graph" className="mt-0">
+                {program ? (
+                  <div className="bg-white p-2 sm:p-4 rounded-lg border shadow-sm">
+                    <SpeedChart program={program} />
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    Données insuffisantes pour le graphique
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       )}
@@ -331,7 +359,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="container relative mx-auto px-4 py-16 sm:py-24 md:py-32">
+        <div className="container relative mx-auto px-4 py-8 sm:py-16 md:py-24">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
               <Dumbbell className="h-4 w-4 text-primary" />
@@ -340,7 +368,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
               </span>
             </div>
             
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl lg:text-5xl">
               {userId ? (
                 <>Bonjour <span className="text-primary">{firstName}</span> 👋</>
               ) : (
@@ -441,7 +469,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
               </div>
 
               {sessions.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-col gap-4">
                   {sessions.map((session) => (
                     <SessionCard key={session.id} session={session} userVma={userVma} />
                   ))}
@@ -537,7 +565,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
             </section>
           </div>
         ) : (
-          // Vue non connecté
+          // Vue non connecté (inchangée)
            <div className="max-w-4xl mx-auto">
             <div className="grid gap-6 md:grid-cols-3 mb-12">
               <Card>
