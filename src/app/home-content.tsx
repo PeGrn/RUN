@@ -20,7 +20,7 @@ interface WeekData {
   weekEnd: Date;
 }
 
-// CORRECTION : Ajout de userVma dans l'interface
+
 interface HomeContentProps {
   userId: string | null;
   firstName: string;
