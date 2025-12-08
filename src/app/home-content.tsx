@@ -49,6 +49,39 @@ interface HomeContentProps {
 
 // --- UTILITAIRES ---
 
+// Helper pour parser la durée stockée (ex: "20", "1:30") en secondes
+function parseDuration(input: string | undefined): number {
+  if (!input) return 0;
+  // Format MM:SS
+  if (input.includes(':')) {
+    const [min, sec] = input.split(':').map(Number);
+    return (min || 0) * 60 + (sec || 0);
+  }
+  // Format nombre simple => on considère que ce sont des minutes
+  const val = parseFloat(input);
+  if (!isNaN(val)) {
+     return val * 60;
+  }
+  return 0;
+}
+
+// Format "Friendly" : 20min, 45sec, 1h 10
+function formatDurationFriendly(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const remainingSeconds = seconds % 3600;
+  const mins = Math.floor(remainingSeconds / 60);
+  const secs = Math.round(remainingSeconds % 60);
+
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h ${mins}` : `${hours}h`;
+  }
+  if (mins > 0) {
+    return secs > 0 ? `${mins}min ${secs}` : `${mins}min`;
+  }
+  return `${secs}sec`;
+}
+
+// Gardé pour les chronos type 46:00
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -91,13 +124,6 @@ function getIntensityLabel(vmaPercentage: number): string {
   return "Allure VMA";
 }
 
-function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
-  const targetSpeedKmh = userVma * (vmaPercent / 100);
-  if (targetSpeedKmh <= 0) return "-";
-  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
-  return formatTime(timeSeconds);
-}
-
 // --- COMPOSANT VISUEL DES ÉTAPES ---
 
 function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], userVma: number | null }) {
@@ -123,26 +149,30 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                   const isTimeBased = step.type === 'time';
                   const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
                   const targetPace = (userVma && speed > 0) ? formatPace(speed) : null;
-                  const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
+                  
+                  // MISE A JOUR : Utilisation du format Friendly pour la durée
+                  let mainValue = "";
+                  if (isTimeBased) {
+                    const durationSec = parseDuration(step.duration);
+                    mainValue = formatDurationFriendly(durationSec);
+                  } else {
+                    mainValue = formatDistance(step.distance);
+                  }
                   
                   let secondaryValue = null;
                   let effectiveDistance = step.distance;
 
                   if (userVma && speed > 0) {
                     if (isTimeBased) {
-                      let seconds = 0;
-                      if (step.duration && step.duration.includes(':')) {
-                        const [m, s] = step.duration.split(':').map(Number);
-                        seconds = (m || 0) * 60 + (s || 0);
-                      } else if (step.duration) {
-                        seconds = parseFloat(step.duration) * 60;
-                      }
+                      // Temps -> Dist (estimation)
+                      const seconds = parseDuration(step.duration);
                       effectiveDistance = (seconds * speed * 1000) / 3600;
                       secondaryValue = `~${formatDistance(effectiveDistance)}`;
                     } else {
+                      // Dist -> Temps (estimation)
                       effectiveDistance = step.distance;
                       const timeSeconds = (step.distance / 1000 / speed) * 3600;
-                      secondaryValue = formatTime(timeSeconds);
+                      secondaryValue = formatDurationFriendly(timeSeconds); // "Friendly" ici aussi pour être cohérent
                     }
                   }
 
@@ -230,14 +260,12 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
   const [isExpanded, setIsExpanded] = useState(false);
   const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
 
-  // Calcul du programme complet pour le graphique
   const program = useMemo(() => {
     if (!sessionSteps.length) return null;
     const steps = convertBuilderElementsToSteps(sessionSteps);
-    // Utiliser la VMA utilisateur si dispo, sinon une valeur par défaut pour visualiser l'intensité
-    const calcVma = userVma || 15;
+    const calcVma = userVma || (session as any).vma || 15;
     return calculateVMAProgram(steps, calcVma);
-  }, [sessionSteps, userVma]);
+  }, [sessionSteps, userVma, session]);
 
   return (
     <Card className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
@@ -273,7 +301,6 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
             </div>
           )}
 
-          {/* Stats rapides */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="p-3 rounded-lg bg-white border shadow-sm">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
@@ -290,12 +317,12 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
                 Durée
               </div>
               <div className="text-xl font-bold text-slate-900">
+                {/* On garde le format HH:MM pour la durée totale, ou on peut passer en friendly aussi */}
                 {formatTime(session.totalTime)}
               </div>
             </div>
           </div>
 
-          {/* Système d'Onglets : Détail vs Graphique */}
           {sessionSteps.length > 0 && (
             <Tabs defaultValue="details" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -357,7 +384,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="container relative mx-auto px-4 py-8 sm:py-16 md:py-24">
+        <div className="container relative mx-auto px-4 py-16 sm:py-24 md:py-32">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
               <Dumbbell className="h-4 w-4 text-primary" />
@@ -366,7 +393,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
               </span>
             </div>
             
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl lg:text-5xl">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               {userId ? (
                 <>Bonjour <span className="text-primary">{firstName}</span> 👋</>
               ) : (
@@ -563,8 +590,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
             </section>
           </div>
         ) : (
-          // Vue non connecté (inchangée)
-           <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <div className="grid gap-6 md:grid-cols-3 mb-12">
               <Card>
                 <CardHeader>

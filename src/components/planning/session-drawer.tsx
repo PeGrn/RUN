@@ -30,11 +30,57 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Format "Friendly" : 20min, 45sec, 1h 10
+function formatDurationFriendly(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const remainingSeconds = seconds % 3600;
+  const mins = Math.floor(remainingSeconds / 60);
+  const secs = Math.round(remainingSeconds % 60);
+
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h ${mins}` : `${hours}h`;
+  }
+  if (mins > 0) {
+    return secs > 0 ? `${mins}min ${secs}` : `${mins}min`;
+  }
+  return `${secs}sec`;
+}
+
+// Helper pour parser la durée stockée
+function parseDuration(input: string | undefined): number {
+  if (!input) return 0;
+  if (input.includes(':')) {
+    const [min, sec] = input.split(':').map(Number);
+    return (min || 0) * 60 + (sec || 0);
+  }
+  const val = parseFloat(input);
+  if (!isNaN(val)) {
+     return val * 60; // Assume minutes par défaut
+  }
+  return 0;
+}
+
 function formatDistance(meters: number): string {
   if (meters < 1000) {
     return `${Math.round(meters)}m`;
   }
   return `${(meters / 1000).toFixed(2)} km`;
+}
+
+function formatPace(speedKmh: number): string {
+  if (!speedKmh || speedKmh <= 0) return "";
+  const secondsPerKm = 3600 / speedKmh;
+  const mins = Math.floor(secondsPerKm / 60);
+  const secs = Math.round(secondsPerKm % 60);
+  return `${mins}'${secs.toString().padStart(2, '0')}/km`;
+}
+
+function calculateSplit200m(speedKmh: number): string {
+  if (speedKmh <= 0) return "";
+  const seconds = (0.2 / speedKmh) * 3600;
+  const rounded = Math.round(seconds);
+  if (rounded < 60) return `${rounded}"`;
+  return formatDurationFriendly(rounded); // Utilise friendly aussi ici (ex: 45sec)
 }
 
 function getIntensityColor(vmaPercentage: number): string {
@@ -48,13 +94,6 @@ function getIntensityLabel(vmaPercentage: number): string {
   if (vmaPercentage < 70) return "Allure EF";
   if (vmaPercentage < 90) return "Allure Active";
   return "Allure VMA";
-}
-
-function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
-  const targetSpeedKmh = userVma * (vmaPercent / 100);
-  if (targetSpeedKmh <= 0) return "-";
-  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
-  return formatTime(timeSeconds);
 }
 
 // --- COMPOSANT VISUEL DES ÉTAPES (Local) ---
@@ -83,44 +122,66 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                 {block.steps.map((step, stepIndex) => {
                   const isTimeBased = step.type === 'time';
                   const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
+                  const targetPace = (userVma && speed > 0) ? formatPace(speed) : null;
                   
                   // Déterminer la valeur principale à afficher
-                  const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
+                  let mainValue = "";
+                  if (isTimeBased) {
+                    const durationSec = parseDuration(step.duration);
+                    mainValue = formatDurationFriendly(durationSec);
+                  } else {
+                    mainValue = formatDistance(step.distance);
+                  }
                   
                   // Calculer la valeur secondaire
                   let secondaryValue = null;
+                  let effectiveDistance = step.distance;
 
                   if (userVma && speed > 0) {
                     if (isTimeBased) {
                       // Temps -> Dist
-                      let seconds = 0;
-                      if (step.duration && step.duration.includes(':')) {
-                        const [m, s] = step.duration.split(':').map(Number);
-                        seconds = (m || 0) * 60 + (s || 0);
-                      } else if (step.duration) {
-                        seconds = parseFloat(step.duration) * 60;
-                      }
-                      const distMeters = (seconds * speed * 1000) / 3600;
-                      secondaryValue = `~${formatDistance(distMeters)}`;
+                      const seconds = parseDuration(step.duration);
+                      effectiveDistance = (seconds * speed * 1000) / 3600;
+                      secondaryValue = `~${formatDistance(effectiveDistance)}`;
                     } else {
                       // Dist -> Temps
+                      effectiveDistance = step.distance;
                       const timeSeconds = (step.distance / 1000 / speed) * 3600;
-                      secondaryValue = formatTime(timeSeconds);
+                      secondaryValue = formatDurationFriendly(timeSeconds);
                     }
                   }
+                  
+                  // Split 200m
+                  const split200 = (userVma && speed > 0 && effectiveDistance > 200) 
+                    ? calculateSplit200m(speed) 
+                    : null;
 
                   return (
                     <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
                       {/* Gauche: Consigne */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-800 text-sm">
                           {mainValue}
                         </span>
                         
                         {secondaryValue ? (
-                          <span className="text-sm font-semibold text-primary">
-                            ({secondaryValue})
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-primary flex items-baseline gap-1">
+                              <span>({secondaryValue}</span>
+                              {targetPace && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  @ {targetPace}
+                                </span>
+                              )}
+                              <span>)</span>
+                            </span>
+
+                            {split200 && (
+                              <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                200m: {split200}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             à {(step.vmaPercentage)}% VMA
@@ -140,11 +201,9 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                           {getIntensityLabel(step.vmaPercentage)}
                         </span>
                         
-                        {step.rest && step.rest !== '0"' && (
-                           <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
-                             <span className="text-[10px]">R:</span> {step.rest}
-                           </div>
-                        )}
+                        <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span className="text-[10px]">R:</span> {(!step.rest || step.rest === '0"' || step.rest === '0') ? "0" : step.rest}
+                        </div>
                       </div>
                     </div>
                   );
@@ -390,7 +449,7 @@ export function SessionDrawer({
                         {session.name}
                     </SheetTitle>
                     <SheetDescription className="mt-1">
-                        {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                        {selectedDate && format(selectedDate, 'EEEE d MMMM', { locale: fr })}
                     </SheetDescription>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -420,8 +479,9 @@ export function SessionDrawer({
                     {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
                 </h3>
                 
+                {/* INTÉGRATION DE ProgramSteps */}
                 <ProgramSteps elements={sessionSteps} userVma={userVma} />
-
+                
             </div>
         </div>
 
