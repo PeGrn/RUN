@@ -3,12 +3,36 @@ import { TrainingElement } from '@/lib/vma';
 import { convertBuilderElementsToSteps } from '@/lib/vma';
 
 /**
- * Format seconds to MM:SS
+ * Helper: Parse une durée string (ex: "1:30") en secondes
  */
-function formatTime(seconds: number): string {
+function parseDurationString(input: string): number {
+  if (!input) return 0;
+  if (input.includes(':')) {
+    const [min, sec] = input.split(':').map(Number);
+    return (min || 0) * 60 + (sec || 0);
+  }
+  const val = parseFloat(input);
+  if (!isNaN(val)) return val * 60; // Assume minutes par défaut
+  return 0;
+}
+
+/**
+ * Format intelligent : "45sec", "1min", "1min 30"
+ */
+function formatDurationFriendly(seconds: number): string {
   const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const secs = Math.round(seconds % 60);
+
+  if (mins === 0) {
+    return `${secs}sec`;
+  }
+  
+  if (secs === 0) {
+    return `${mins}min`;
+  }
+
+  // Si on a des minutes et des secondes
+  return `${mins}min ${secs}`;
 }
 
 /**
@@ -33,7 +57,7 @@ function calculateTimeForVMA(
   const speed = vma * vmaMultiplier;
   if (speed <= 0) return "-";
   const timeInSeconds = (distance / 1000 / speed) * 3600;
-  return formatTime(timeInSeconds);
+  return formatDurationFriendly(timeInSeconds); // Utilisation du nouveau format
 }
 
 /**
@@ -62,15 +86,14 @@ function createPDFDocument(
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  // const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
   
   // --- CONFIGURATION DES TAILLES FIXES ---
   const vmaColWidth = 12;
   const blockIndicatorWidth = 6; 
-  const rowHeight = 6; // Hauteur fixe demandée
+  const rowHeight = 6; 
 
-  // Convert builder elements to steps to get step info
+  // Convert builder elements to steps
   const trainingSteps = convertBuilderElementsToSteps(builderElements);
 
   // VMA range: 12.0 to 23.0
@@ -85,7 +108,7 @@ function createPDFDocument(
   interface ColumnInfo {
     type: 'vma' | 'block-indicator' | 'step';
     stepName?: string;
-    headerLabel?: string; // Distance ou Durée
+    headerLabel?: string; 
     rest?: string;
     blockReps?: number;
     stepIndex?: number;
@@ -102,9 +125,13 @@ function createPDFDocument(
     block.steps.forEach((step) => {
       // Déterminer le label de l'entête (Distance ou Durée)
       let headerLabel = "";
+      
       if (step.type === 'time') {
-         headerLabel = step.duration || "00:00";
+         // Si c'est une durée, on la formate joliment (ex: "10:00" -> "10min")
+         const secs = parseDurationString(step.duration || "0");
+         headerLabel = formatDurationFriendly(secs);
       } else {
+         // Si distance
          headerLabel = step.distance >= 1000
           ? `${(step.distance / 1000).toFixed(1)}km`
           : `${step.distance}m`;
@@ -259,7 +286,7 @@ function createPDFDocument(
              // Si c'est une durée -> on affiche l'allure cible (min/km)
              cellText = calculatePaceForVMA(step.vmaMultiplier, vma);
           } else {
-             // Si c'est une distance -> on affiche le temps cible (MM:SS)
+             // Si c'est une distance -> on affiche le temps cible (MM:SS ou min/sec)
              cellText = calculateTimeForVMA(step.distance, step.vmaMultiplier, vma);
           }
 
@@ -309,9 +336,6 @@ function createPDFDocument(
   return { doc, buffer };
 }
 
-/**
- * Generate PDF and download it
- */
 export function generatePDF(
   builderElements: TrainingElement[],
   programName: string = 'Programme VMA'
@@ -321,9 +345,6 @@ export function generatePDF(
   doc.save(fileName);
 }
 
-/**
- * Generate PDF and return buffer for server-side operations
- */
 export function generatePDFBuffer(
   builderElements: TrainingElement[],
   programName: string = 'Programme VMA'
