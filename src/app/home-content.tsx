@@ -2,7 +2,21 @@
 
 import { useState } from 'react';
 import Link from "next/link";
-import { CalendarDays, ArrowRight, Dumbbell, Calendar, ChevronRight, ChevronLeft, ChevronDown, Clock, Route, Repeat, Activity, Flag, Beer } from "lucide-react";
+import { 
+  CalendarDays, 
+  ArrowRight, 
+  Dumbbell, 
+  Calendar, 
+  ChevronRight, 
+  ChevronLeft, 
+  ChevronDown, 
+  Clock, 
+  Route, 
+  Repeat, 
+  Activity, 
+  Flag, 
+  Beer 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +33,6 @@ interface WeekData {
   weekStart: Date;
   weekEnd: Date;
 }
-
 
 interface HomeContentProps {
   userId: string | null;
@@ -57,13 +70,6 @@ function getIntensityLabel(vmaPercentage: number): string {
   return "Allure VMA";
 }
 
-function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
-  const targetSpeedKmh = userVma * (vmaPercent / 100);
-  if (targetSpeedKmh <= 0) return "-";
-  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
-  return formatTime(timeSeconds);
-}
-
 // --- COMPOSANT VISUEL DES ÉTAPES ---
 
 function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], userVma: number | null }) {
@@ -88,22 +94,51 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
               <div className={cn("relative flex flex-col gap-2", isRepetition && "pr-12")}>
                 
                 {block.steps.map((step, stepIndex) => {
-                  // Calcul du temps cible si VMA dispo
-                  const targetTime = userVma 
-                    ? calculateTargetTime(step.distance, step.vmaPercentage, userVma)
-                    : null;
+                  const isTimeBased = step.type === 'time';
+                  const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
+                  
+                  // Déterminer la valeur principale à afficher (ce qui est prescrit)
+                  const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
+                  
+                  // Calculer la valeur secondaire (l'estimation) si VMA dispo
+                  let secondaryValue = null;
+                  let secondaryLabel = "";
+
+                  if (userVma && speed > 0) {
+                    if (isTimeBased) {
+                      // C'est du temps -> on estime la distance
+                      // Parsing simple de la durée "MM:SS" ou "MM"
+                      let seconds = 0;
+                      if (step.duration.includes(':')) {
+                        const [m, s] = step.duration.split(':').map(Number);
+                        seconds = (m || 0) * 60 + (s || 0);
+                      } else {
+                        seconds = parseFloat(step.duration) * 60; // Assume minutes si nombre seul
+                      }
+                      
+                      const distMeters = (seconds * speed * 1000) / 3600;
+                      secondaryValue = `~${formatDistance(distMeters)}`;
+                      secondaryLabel = "dist.";
+                    } else {
+                      // C'est de la distance -> on estime le temps
+                      const timeSeconds = (step.distance / 1000 / speed) * 3600;
+                      secondaryValue = formatTime(timeSeconds);
+                      secondaryLabel = "temps";
+                    }
+                  }
 
                   return (
                     <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
-                      {/* Gauche: Distance / Temps */}
+                      {/* Gauche: La consigne principale */}
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-800 text-sm">
-                          {formatDistance(step.distance)}
+                          {mainValue}
                         </span>
                         
-                        {targetTime ? (
+                        {/* Valeur calculée / secondaire */}
+                        {secondaryValue ? (
                           <span className="text-sm font-semibold text-primary">
-                            en {targetTime}
+                            ({secondaryValue})
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">
@@ -114,7 +149,7 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
 
                       {/* Droite: Intensité / Récup */}
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 sm:mt-0">
-                        {targetTime && (
+                        {secondaryValue && (
                            <span className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
                              {step.vmaPercentage}% VMA
                            </span>
@@ -223,7 +258,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
             <div>
               <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider text-muted-foreground">
                 Détail de la séance
-                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
+                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps/distances cibles)</span>}
               </h4>
               <ProgramSteps elements={sessionSteps} userVma={userVma} />
             </div>
@@ -249,6 +284,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
 
   return (
     <main className="min-h-screen">
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="container relative mx-auto px-4 py-16 sm:py-24 md:py-32">
@@ -297,6 +333,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
         </div>
       </div>
 
+      {/* Content Section */}
       <div className="container mx-auto px-4 py-12">
         {userId ? (
           <div className="max-w-5xl mx-auto space-y-8">

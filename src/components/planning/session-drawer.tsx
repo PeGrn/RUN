@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Download, ChevronRight, Clock, Route, Mail, Flag, CalendarDays, Beer } from 'lucide-react';
+import { Download, ChevronRight, Clock, Route, Mail, Flag, CalendarDays, Beer, Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getSessionPdfUrl } from '@/actions/training-sessions';
@@ -20,49 +20,161 @@ import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { TrainingElement } from '@/lib/vma';
 import type { TrainingSession, Event } from '@prisma/client';
+import { cn } from '@/lib/utils';
 
-// --- UTILITAIRES ---
-const formatDuration = (seconds: number): string => {
+// --- UTILITAIRES DE FORMATAGE ---
+
+function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
+  const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
+}
 
-// MODIFICATION : Gestion m/km
-const formatDistance = (meters: number): string => {
+function formatDistance(meters: number): string {
   if (meters < 1000) {
     return `${Math.round(meters)}m`;
   }
   return `${(meters / 1000).toFixed(2)} km`;
-};
+}
 
-const generateSessionSummary = (elements: TrainingElement[]): string => {
-  if (!elements || elements.length === 0) {
-    return 'Aucun détail disponible';
-  }
+function getIntensityColor(vmaPercentage: number): string {
+  if (vmaPercentage < 70) return "text-green-600";
+  if (vmaPercentage < 85) return "text-blue-600";
+  if (vmaPercentage < 100) return "text-orange-500";
+  return "text-red-600";
+}
 
-  const summary: string[] = [];
-  let blockIndex = 1;
+function getIntensityLabel(vmaPercentage: number): string {
+  if (vmaPercentage < 70) return "Allure EF";
+  if (vmaPercentage < 90) return "Allure Active";
+  return "Allure VMA";
+}
 
-  elements.forEach((block) => {
-    const blockTitle = block.name || `Bloc ${blockIndex}`;
-    summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
+function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
+  const targetSpeedKmh = userVma * (vmaPercent / 100);
+  if (targetSpeedKmh <= 0) return "-";
+  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
+  return formatTime(timeSeconds);
+}
 
-    block.steps.forEach((step, stepIdx) => {
-      // MODIFICATION : Utilisation du format intelligent ici aussi
-      const distance = formatDistance(step.distance);
-      const intensity = `${step.vmaPercentage}% VMA`;
-      const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
-      const stepName = step.name || `Étape ${stepIdx + 1}`;
+// --- COMPOSANT VISUEL DES ÉTAPES (Local) ---
 
-      summary.push(`   • ${stepName}: ${distance} à ${intensity}${rest}`);
-    });
+function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], userVma: number | null }) {
+  if (!elements || elements.length === 0) return <p className="text-sm text-muted-foreground">Aucun détail disponible</p>;
 
-    blockIndex++;
-  });
+  return (
+    <div className="space-y-4">
+      {elements.map((block, blockIndex) => {
+        const isRepetition = block.repetitions > 1;
 
-  return summary.join('\n');
-};
+        return (
+          <div key={blockIndex} className="flex gap-3">
+            {/* Badge Numéro du Bloc */}
+            <div className="flex-shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                {blockIndex + 1}
+              </div>
+            </div>
+
+            {/* Contenu du Bloc */}
+            <div className="flex-1 space-y-2">
+              <div className={cn("relative flex flex-col gap-2", isRepetition && "pr-12")}>
+                
+                {block.steps.map((step, stepIndex) => {
+                  const isTimeBased = step.type === 'time';
+                  const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
+                  
+                  // Déterminer la valeur principale à afficher
+                  const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
+                  
+                  // Calculer la valeur secondaire
+                  let secondaryValue = null;
+
+                  if (userVma && speed > 0) {
+                    if (isTimeBased) {
+                      // Temps -> Dist
+                      let seconds = 0;
+                      if (step.duration && step.duration.includes(':')) {
+                        const [m, s] = step.duration.split(':').map(Number);
+                        seconds = (m || 0) * 60 + (s || 0);
+                      } else if (step.duration) {
+                        seconds = parseFloat(step.duration) * 60;
+                      }
+                      const distMeters = (seconds * speed * 1000) / 3600;
+                      secondaryValue = `~${formatDistance(distMeters)}`;
+                    } else {
+                      // Dist -> Temps
+                      const timeSeconds = (step.distance / 1000 / speed) * 3600;
+                      secondaryValue = formatTime(timeSeconds);
+                    }
+                  }
+
+                  return (
+                    <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
+                      {/* Gauche: Consigne */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-800 text-sm">
+                          {mainValue}
+                        </span>
+                        
+                        {secondaryValue ? (
+                          <span className="text-sm font-semibold text-primary">
+                            ({secondaryValue})
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            à {(step.vmaPercentage)}% VMA
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Droite: Infos */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 sm:mt-0">
+                        {secondaryValue && (
+                           <span className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
+                             {step.vmaPercentage}% VMA
+                           </span>
+                        )}
+
+                        <span className={cn("text-xs font-semibold uppercase", getIntensityColor(step.vmaPercentage))}>
+                          {getIntensityLabel(step.vmaPercentage)}
+                        </span>
+                        
+                        {step.rest && step.rest !== '0"' && (
+                           <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                             <span className="text-[10px]">R:</span> {step.rest}
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Badge Répétition */}
+                {isRepetition && (
+                  <div className="absolute top-1/2 -right-0 -translate-y-1/2 flex flex-col items-center gap-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white shadow-md">
+                      {block.repetitions}x
+                    </div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                      <Repeat className="h-3 w-3" />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {isRepetition && (
+                 <div className="h-full w-4 absolute right-4 top-0 border-r-2 border-orange-200 rounded-r-lg -z-10" />
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- SESSION DRAWER ---
 
 interface SessionDrawerProps {
   open: boolean;
@@ -85,6 +197,9 @@ export function SessionDrawer({
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
   const { user } = useUser();
+  
+  // Récupérer la VMA de l'utilisateur
+  const userVma = (user?.publicMetadata?.vma as number) || null;
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
@@ -226,12 +341,11 @@ export function SessionDrawer({
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Route className="h-4 w-4" />
-                          {/* MODIFICATION ICI */}
                           {formatDistance(session.totalDistance)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {formatDuration(session.totalTime)}
+                          {formatTime(session.totalTime)}
                         </span>
                       </div>
                     </div>
@@ -276,16 +390,15 @@ export function SessionDrawer({
                         {session.name}
                     </SheetTitle>
                     <SheetDescription className="mt-1">
-                        {selectedDate && format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+                        {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
                     </SheetDescription>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                     <Badge variant="secondary" className="font-mono">
-                        {/* MODIFICATION ICI */}
                         {formatDistance(session.totalDistance)}
                     </Badge>
                     <Badge variant="outline" className="font-mono">
-                        {formatDuration(session.totalTime)}
+                        {formatTime(session.totalTime)}
                     </Badge>
                 </div>
             </div>
@@ -304,12 +417,12 @@ export function SessionDrawer({
             <div className="space-y-3 mb-8">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
                     Détail de la séance
+                    {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
                 </h3>
-                <div className="text-sm font-mono leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-4 rounded-lg border">
-                    <pre className="whitespace-pre-wrap font-sans">
-                        {generateSessionSummary(sessionSteps)}
-                    </pre>
-                </div>
+                
+                {/* --- INTÉGRATION DE LA NOUVELLE VUE VISUELLE --- */}
+                <ProgramSteps elements={sessionSteps} userVma={userVma} />
+
             </div>
         </div>
 

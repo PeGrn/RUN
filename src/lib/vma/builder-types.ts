@@ -1,8 +1,13 @@
 // Types for the training builder interface
 
+// 1. Définition du type manquant
+export type TargetType = 'distance' | 'time';
+
 export interface BuilderStep {
   id: string;
-  distance: number; // meters
+  type: TargetType;
+  distance: number; // meters (utilisé si type === 'distance')
+  duration: string; // e.g., "10:00" (utilisé si type === 'time')
   vmaPercentage: number; // e.g., 88 for 88% VMA
   rest: string; // e.g., "2'", "15"", "0""
   name?: string;
@@ -30,7 +35,9 @@ export interface BuilderProgram {
 export function createEmptyStep(): BuilderStep {
   return {
     id: crypto.randomUUID(),
+    type: 'distance', // Valeur par défaut
     distance: 100,
+    duration: '',     // Correction : Initialisation obligatoire
     vmaPercentage: 100,
     rest: '0"',
     group: 'main'

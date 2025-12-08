@@ -1,13 +1,15 @@
 export interface TrainingStep {
   id: string;
   name: string;
+  type?: 'distance' | 'time'; // Nouveau champ optionnel (pour compatibilité)
   distance: number; // meters
-  vmaMultiplier: number; // 0.88, 1.1, etc.
-  rest: string; // "2'", "15"", etc.
+  duration?: string; // Nouveau champ (ex: "10:00")
+  vmaMultiplier: number; 
+  rest: string; 
   repetitions: number;
   group: 'warmup' | 'main' | 'cooldown';
   description?: string;
-  blockId?: string; // ID of the repetition block this step belongs to
+  blockId?: string;
 }
 
 export interface StepResult {

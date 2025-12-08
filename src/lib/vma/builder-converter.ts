@@ -13,8 +13,10 @@ export function convertBuilderStepToTrainingStep(
   return {
     id: builderStep.id,
     name: builderStep.name || `STEP ${stepNumber}`,
+    type: builderStep.type, // Transfert du type
     distance: builderStep.distance,
-    vmaMultiplier: builderStep.vmaPercentage / 100, // Convert percentage to multiplier
+    duration: builderStep.duration, // Transfert de la durée
+    vmaMultiplier: builderStep.vmaPercentage / 100,
     rest: builderStep.rest || '0"',
     repetitions,
     group: builderStep.group || 'main',
@@ -30,15 +32,11 @@ export function convertBuilderElementsToSteps(elements: TrainingElement[]): Trai
   const steps: TrainingStep[] = [];
   let stepNumber = 1;
 
-  // All elements are RepetitionBlocks now
   elements.forEach((block) => {
-    // Safety check: ensure block has steps array
     if (!block.steps || !Array.isArray(block.steps)) {
-      console.warn('Invalid block structure: missing steps array', block);
       return;
     }
 
-    // For each block, create steps with the block's repetition count and blockId
     block.steps.forEach((builderStep) => {
       const step = convertBuilderStepToTrainingStep(builderStep, stepNumber++, block.repetitions, block.id);
       steps.push(step);
