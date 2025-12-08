@@ -1,10 +1,11 @@
 'use server';
 
-import { clerkClient } from '@clerk/nextjs/server';
+import { clerkClient, auth } from '@clerk/nextjs/server';
 import { isAdmin, isCoachOrAdmin } from '@/lib/auth';
 import type { UserRole, UserStatus } from '@/lib/auth';
 import { resend, FROM_EMAIL } from '@/lib/resend';
 import ApprovalEmail from '@/emails/approval-email';
+import { revalidatePath } from 'next/cache';
 
 export interface UserWithMetadata {
   id: string;
@@ -222,5 +223,35 @@ export async function updateUserRole(userId: string, newRole: UserRole) {
   } catch (error) {
     console.error('Error updating user role:', error);
     return { success: false, error: 'Failed to update user role' };
+  }
+}
+
+/**
+ * Met à jour la VMA de l'utilisateur
+ */
+export async function updateUserVma(vma: number) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { success: false, error: 'Non autorisé' };
+
+    const client = await clerkClient();
+    
+    // 1. Récupérer les métadonnées existantes pour ne pas les perdre
+    const user = await client.users.getUser(userId);
+    const currentMetadata = user.publicMetadata || {};
+
+    // 2. Mettre à jour avec la nouvelle VMA
+    await client.users.updateUser(userId, {
+      publicMetadata: {
+        ...currentMetadata,
+        vma: vma,
+      },
+    });
+
+    revalidatePath('/'); // Rafraîchir la page d'accueil
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating VMA:', error);
+    return { success: false, error: 'Erreur lors de la mise à jour de la VMA' };
   }
 }

@@ -2,7 +2,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { addWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { TrainingSession, Event } from "@prisma/client";
 import { HomeContent } from "./home-content";
 
 async function getSessionsAndEvents(weekOffset: number = 0) {
@@ -43,6 +42,10 @@ export default async function Home() {
   const { userId } = await auth();
   const user = await currentUser();
 
+  // ÉTAPE 3 : Récupérer la VMA stockée dans les métadonnées
+  // On cast en number ou null si non défini
+  const userVma = (user?.publicMetadata?.vma as number) || null;
+
   // Récupérer semaine courante et semaine prochaine
   const [currentWeek, nextWeek] = await Promise.all([
     getSessionsAndEvents(0),
@@ -55,6 +58,7 @@ export default async function Home() {
     <HomeContent 
       userId={userId}
       firstName={firstName}
+      userVma={userVma} // On passe la VMA au composant client
       currentWeek={currentWeek}
       nextWeek={nextWeek}
     />

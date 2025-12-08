@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from "next/link";
-import { CalendarDays, ArrowRight, Dumbbell, Calendar, ChevronRight, ChevronLeft, ChevronDown, Clock, Route } from "lucide-react";
+import { CalendarDays, ArrowRight, Dumbbell, Calendar, ChevronRight, ChevronLeft, ChevronDown, Clock, Route, Repeat, Activity, Flag, Beer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { TrainingSession, Event } from "@prisma/client";
 import type { TrainingElement } from "@/lib/vma";
+import { cn } from "@/lib/utils";
+import { VmaDialog } from '@/components/settings/vma-dialog';
 
 interface WeekData {
   sessions: TrainingSession[];
@@ -18,21 +20,23 @@ interface WeekData {
   weekEnd: Date;
 }
 
+// CORRECTION : Ajout de userVma dans l'interface
 interface HomeContentProps {
   userId: string | null;
   firstName: string;
+  userVma: number | null;
   currentWeek: WeekData;
   nextWeek: WeekData;
 }
 
-// Fonction utilitaire pour formater le temps
+// --- UTILITAIRES ---
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Formate la distance : "200m" ou "1.50km"
 function formatDistance(meters: number): string {
   if (meters < 1000) {
     return `${Math.round(meters)}m`;
@@ -40,50 +44,133 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)}km`;
 }
 
-// Fonction utilitaire pour générer le résumé de la séance
-function generateSessionSummary(elements: TrainingElement[]): string {
-  if (!elements || elements.length === 0) {
-    return 'Aucun détail disponible';
-  }
-
-  const summary: string[] = [];
-  let blockIndex = 1;
-
-  elements.forEach((block) => {
-    const blockTitle = block.name || `Bloc ${blockIndex}`;
-    summary.push(`${blockIndex}. ${block.repetitions}x ${blockTitle}`);
-
-    block.steps.forEach((step, stepIdx) => {
-      const distance = formatDistance(step.distance);
-      const intensity = `${step.vmaPercentage}% VMA`;
-      const rest = step.rest !== '0"' ? ` - Récup: ${step.rest}` : '';
-      const stepName = step.name || `Étape ${stepIdx + 1}`;
-
-      summary.push(`   • ${stepName}: ${distance} à ${intensity}${rest}`);
-    });
-
-    blockIndex++;
-  });
-
-  return summary.join('\n');
+function getIntensityColor(vmaPercentage: number): string {
+  if (vmaPercentage < 70) return "text-green-600";
+  if (vmaPercentage < 85) return "text-blue-600";
+  if (vmaPercentage < 100) return "text-orange-500";
+  return "text-red-600";
 }
 
-// Composant SessionCard avec expansion
-interface SessionCardProps {
-  session: TrainingSession;
+function getIntensityLabel(vmaPercentage: number): string {
+  if (vmaPercentage < 70) return "Allure EF";
+  if (vmaPercentage < 90) return "Allure Active";
+  return "Allure VMA";
 }
 
-function SessionCard({ session }: SessionCardProps) {
+function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
+  const targetSpeedKmh = userVma * (vmaPercent / 100);
+  if (targetSpeedKmh <= 0) return "-";
+  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
+  return formatTime(timeSeconds);
+}
+
+// --- COMPOSANT VISUEL DES ÉTAPES ---
+
+function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], userVma: number | null }) {
+  if (!elements || elements.length === 0) return <p className="text-sm text-muted-foreground">Aucun détail</p>;
+
+  return (
+    <div className="space-y-4">
+      {elements.map((block, blockIndex) => {
+        const isRepetition = block.repetitions > 1;
+
+        return (
+          <div key={blockIndex} className="flex gap-3">
+            {/* Badge Numéro du Bloc */}
+            <div className="flex-shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                {blockIndex + 1}
+              </div>
+            </div>
+
+            {/* Contenu du Bloc */}
+            <div className="flex-1 space-y-2">
+              <div className={cn("relative flex flex-col gap-2", isRepetition && "pr-12")}>
+                
+                {block.steps.map((step, stepIndex) => {
+                  // Calcul du temps cible si VMA dispo
+                  const targetTime = userVma 
+                    ? calculateTargetTime(step.distance, step.vmaPercentage, userVma)
+                    : null;
+
+                  return (
+                    <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
+                      {/* Gauche: Distance / Temps */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-800 text-sm">
+                          {formatDistance(step.distance)}
+                        </span>
+                        
+                        {targetTime ? (
+                          <span className="text-sm font-semibold text-primary">
+                            en {targetTime}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            à {(step.vmaPercentage)}% VMA
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Droite: Intensité / Récup */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 sm:mt-0">
+                        {targetTime && (
+                           <span className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
+                             {step.vmaPercentage}% VMA
+                           </span>
+                        )}
+
+                        <span className={cn("text-xs font-semibold uppercase", getIntensityColor(step.vmaPercentage))}>
+                          {getIntensityLabel(step.vmaPercentage)}
+                        </span>
+                        
+                        {step.rest && step.rest !== '0"' && (
+                           <div className="text-xs text-muted-foreground bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                             <span className="text-[10px]">R:</span> {step.rest}
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Badge Répétition */}
+                {isRepetition && (
+                  <div className="absolute top-1/2 -right-0 -translate-y-1/2 flex flex-col items-center gap-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white shadow-md">
+                      {block.repetitions}x
+                    </div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                      <Repeat className="h-3 w-3" />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {isRepetition && (
+                 <div className="h-full w-4 absolute right-4 top-0 border-r-2 border-orange-200 rounded-r-lg -z-10" />
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- SESSION CARD ---
+
+function SessionCard({ session, userVma }: { session: TrainingSession, userVma: number | null }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
 
   return (
-    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+    <Card className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full text-left"
       >
-        <CardHeader>
+        <CardHeader className="bg-white">
           <div className="flex items-start justify-between">
             <div className="space-y-1 flex-1 min-w-0">
               <CardTitle className="text-lg line-clamp-1 flex items-center gap-2">
@@ -104,43 +191,41 @@ function SessionCard({ session }: SessionCardProps) {
       </button>
 
       {isExpanded && (
-        <CardContent className="border-t pt-4">
-          {/* Description */}
+        <CardContent className="border-t pt-6 pb-6 px-4 sm:px-6">
           {session.description && (
-            <div className="mb-4">
-              <p className="text-sm text-muted-foreground">{session.description}</p>
+            <div className="mb-6 p-3 bg-white rounded-md border text-sm text-muted-foreground italic">
+              &quot;{session.description}&quot;
             </div>
           )}
 
-          {/* Indicateurs clés */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="p-3 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Route className="h-4 w-4" />
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <div className="p-3 rounded-lg bg-white border shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                <Route className="h-3 w-3" />
                 Distance
               </div>
-              <div className="text-xl font-bold">
+              <div className="text-xl font-bold text-slate-900">
                 {formatDistance(session.totalDistance)}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Clock className="h-4 w-4" />
+            <div className="p-3 rounded-lg bg-white border shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                <Clock className="h-3 w-3" />
                 Durée
               </div>
-              <div className="text-xl font-bold">
+              <div className="text-xl font-bold text-slate-900">
                 {formatTime(session.totalTime)}
               </div>
             </div>
           </div>
 
-          {/* Programme détaillé */}
           {sessionSteps.length > 0 && (
             <div>
-              <h4 className="font-semibold text-sm mb-2">Programme</h4>
-              <div className="p-3 rounded-lg bg-muted/30 text-xs font-mono whitespace-pre-line">
-                {generateSessionSummary(sessionSteps)}
-              </div>
+              <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider text-muted-foreground">
+                Détail de la séance
+                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
+              </h4>
+              <ProgramSteps elements={sessionSteps} userVma={userVma} />
             </div>
           )}
         </CardContent>
@@ -149,14 +234,14 @@ function SessionCard({ session }: SessionCardProps) {
   );
 }
 
-export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeContentProps) {
-  const [showingNextWeek, setShowingNextWeek] = useState(false);
+// --- HOME CONTENT PRINCIPAL ---
 
-  // Déterminer quelle semaine afficher
+export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek }: HomeContentProps) {
+  const [showingNextWeek, setShowingNextWeek] = useState(false);
+  const [vmaDialogOpen, setVmaDialogOpen] = useState(false);
+
   const displayedWeek = showingNextWeek ? nextWeek : currentWeek;
   const { sessions, events, weekStart, weekEnd } = displayedWeek;
-
-  // Vérifier s'il y a du contenu dans la semaine prochaine
   const hasNextWeekContent = nextWeek.sessions.length > 0 || nextWeek.events.length > 0;
 
   const weekLabel = showingNextWeek ? "Semaine prochaine" : "Cette semaine";
@@ -164,7 +249,6 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
 
   return (
     <main className="min-h-screen">
-      {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="container relative mx-auto px-4 py-16 sm:py-24 md:py-32">
@@ -178,36 +262,34 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
             
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               {userId ? (
-                <>
-                  Bonjour <span className="text-primary">{firstName}</span> 👋
-                </>
+                <>Bonjour <span className="text-primary">{firstName}</span> 👋</>
               ) : (
-                <>
-                  Bienvenue sur <span className="text-primary">ESL Team</span>
-                </>
+                <>Bienvenue sur <span className="text-primary">ESL Team</span></>
               )}
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {userId ? (
-                "Voici un aperçu de votre semaine d'entraînement"
-              ) : (
-                "Votre plateforme d'entraînement personnalisée pour atteindre vos objectifs"
-              )}
+              {userId ? "Voici un aperçu de votre semaine d'entraînement" : "Votre plateforme d'entraînement personnalisée pour atteindre vos objectifs"}
             </p>
 
-            {!userId && (
+            {userId ? (
+              <div className="flex justify-center mt-6">
+                  <Button 
+                      variant="outline" 
+                      className="bg-white/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
+                      onClick={() => setVmaDialogOpen(true)}
+                  >
+                      <Activity className="h-4 w-4 mr-2 text-primary" />
+                      {userVma ? `Ma VMA : ${userVma} km/h` : "Configurer ma VMA"}
+                  </Button>
+              </div>
+            ) : (
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/sign-in">
-                    Se connecter
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
+                  <Link href="/sign-in">Se connecter <ArrowRight className="ml-2 h-5 w-5" /></Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
-                  <Link href="/sign-up">
-                    Créer un compte
-                  </Link>
+                  <Link href="/sign-up">Créer un compte</Link>
                 </Button>
               </div>
             )}
@@ -215,13 +297,10 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
         </div>
       </div>
 
-      {/* Content Section */}
       <div className="container mx-auto px-4 py-12">
         {userId ? (
-          // Vue utilisateur connecté
           <div className="max-w-5xl mx-auto space-y-8">
-            {/* En-tête de semaine avec navigation */}
-            {/* MODIFICATION : flex-col sur mobile pour que les boutons passent dessous */}
+            {/* Header Navigation Semaine */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div>
@@ -229,23 +308,19 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                   <p className="text-sm text-muted-foreground">{weekDateRange}</p>
                 </div>
                 {!showingNextWeek && (
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                    Actuelle
-                  </Badge>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Actuelle</Badge>
                 )}
               </div>
 
-              {/* MODIFICATION : w-full sur mobile pour prendre toute la largeur */}
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowingNextWeek(false)}
                   disabled={!showingNextWeek}
-                  className="flex-1 md:flex-none" // flex-1 pour équilibrer la largeur sur mobile
+                  className="flex-1 md:flex-none"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Semaine actuelle
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Semaine actuelle
                 </Button>
                 
                 {hasNextWeekContent && (
@@ -254,20 +329,19 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                     size="sm"
                     onClick={() => setShowingNextWeek(true)}
                     disabled={showingNextWeek}
-                    className="flex-1 md:flex-none" // flex-1 pour équilibrer la largeur sur mobile
+                    className="flex-1 md:flex-none"
                   >
-                    Semaine prochaine
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    Semaine prochaine <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 )}
               </div>
             </div>
 
-            {/* Séances à venir */}
+            {/* Séances */}
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold">Séances d'entraînement</h3>
+                  <h3 className="text-xl font-semibold">Séances d&apos;entraînement</h3>
                   <p className="text-sm text-muted-foreground">
                     {sessions.length > 0 
                       ? `${sessions.length} séance${sessions.length > 1 ? 's' : ''} planifiée${sessions.length > 1 ? 's' : ''}`
@@ -276,17 +350,14 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/planning">
-                    Planning complet
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                  <Link href="/planning">Planning complet <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
               </div>
 
               {sessions.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   {sessions.map((session) => (
-                    <SessionCard key={session.id} session={session} />
+                    <SessionCard key={session.id} session={session} userVma={userVma} />
                   ))}
                 </div>
               ) : (
@@ -297,56 +368,42 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                       Aucune séance planifiée pour {showingNextWeek ? "la semaine prochaine" : "cette semaine"}
                     </p>
                     <Button asChild variant="outline">
-                      <Link href="/planning">
-                        Consulter le planning
-                      </Link>
+                      <Link href="/planning">Consulter le planning</Link>
                     </Button>
                   </CardContent>
                 </Card>
               )}
             </section>
 
-            {/* Événements à venir */}
+            {/* Événements */}
             {events.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-xl font-semibold">Événements</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Courses et rassemblements
-                    </p>
+                    <p className="text-sm text-muted-foreground">Courses et rassemblements</p>
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   {events.map((event) => (
                     <Card key={event.id} className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base line-clamp-1">
-                              {event.title}
-                            </CardTitle>
+                            <CardTitle className="text-base line-clamp-1">{event.title}</CardTitle>
                             <CardDescription className="flex items-center gap-2 mt-1">
                               <CalendarDays className="h-3 w-3" />
                               {format(new Date(event.eventDate), "EEEE d MMMM", { locale: fr })}
                             </CardDescription>
                           </div>
-                          <Badge 
-                            variant="secondary" 
-                            className="shrink-0"
-                          >
-                            {event.type === 'race' ? '🏁 Course' : 
-                             event.type === 'gathering' ? '🍺 Social' : 
-                             '📅 Autre'}
+                          <Badge variant="secondary" className="shrink-0">
+                            {event.type === 'race' ? '🏁 Course' : event.type === 'gathering' ? '🍺 Social' : '📅 Autre'}
                           </Badge>
                         </div>
                       </CardHeader>
                       {event.description && (
                         <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {event.description}
-                          </p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
                         </CardContent>
                       )}
                     </Card>
@@ -355,7 +412,7 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
               </section>
             )}
 
-            {/* Actions rapides */}
+            {/* Actions Rapides */}
             <section>
               <h3 className="text-xl font-semibold mb-6">Actions rapides</h3>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -366,15 +423,11 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                         <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                           <Dumbbell className="h-6 w-6 text-primary" />
                         </div>
-                        <CardTitle className="text-xl">
-                          Créer un entraînement
-                        </CardTitle>
+                        <CardTitle className="text-xl">Créer un entraînement</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-base">
-                        Construisez votre séance personnalisée
-                      </CardDescription>
+                      <CardDescription className="text-base">Construisez votre séance personnalisée</CardDescription>
                     </CardContent>
                   </Link>
                 </Card>
@@ -386,15 +439,11 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                         <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                           <CalendarDays className="h-6 w-6 text-primary" />
                         </div>
-                        <CardTitle className="text-xl">
-                          Planning complet
-                        </CardTitle>
+                        <CardTitle className="text-xl">Planning complet</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-base">
-                        Consultez toutes vos séances planifiées
-                      </CardDescription>
+                      <CardDescription className="text-base">Consultez toutes vos séances planifiées</CardDescription>
                     </CardContent>
                   </Link>
                 </Card>
@@ -402,8 +451,8 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
             </section>
           </div>
         ) : (
-          // Vue utilisateur non connecté
-          <div className="max-w-4xl mx-auto">
+          // Vue non connecté
+           <div className="max-w-4xl mx-auto">
             <div className="grid gap-6 md:grid-cols-3 mb-12">
               <Card>
                 <CardHeader>
@@ -414,7 +463,7 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Consultez et téléchargez vos séances d'entraînement planifiées
+                    Consultez et téléchargez vos séances d&apos;entraînement planifiées
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -428,7 +477,7 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Créez vos propres programmes d'entraînement personnalisés
+                    Créez vos propres programmes d&apos;entraînement personnalisés
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -454,7 +503,7 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
                   Prêt à commencer ?
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Rejoignez l'équipe ESL et accédez à tous les outils d'entraînement
+                  Rejoignez l&apos;équipe ESL et accédez à tous les outils d&apos;entraînement
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -474,6 +523,12 @@ export function HomeContent({ userId, firstName, currentWeek, nextWeek }: HomeCo
           </div>
         )}
       </div>
+
+      <VmaDialog 
+        open={vmaDialogOpen} 
+        onOpenChange={setVmaDialogOpen} 
+        currentVma={userVma || undefined} 
+      />
     </main>
   );
 }
