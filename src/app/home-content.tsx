@@ -57,6 +57,24 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)}km`;
 }
 
+// Calcul de l'allure (min/km)
+function formatPace(speedKmh: number): string {
+  if (!speedKmh || speedKmh <= 0) return "";
+  const secondsPerKm = 3600 / speedKmh;
+  const mins = Math.floor(secondsPerKm / 60);
+  const secs = Math.round(secondsPerKm % 60);
+  return `${mins}'${secs.toString().padStart(2, '0')}/km`;
+}
+
+// NOUVELLE FONCTION : Calcul du temps de passage au 200m
+function calculateSplit200m(speedKmh: number): string {
+  if (speedKmh <= 0) return "";
+  const seconds = (0.2 / speedKmh) * 3600; // Temps pour 0.2 km
+  const rounded = Math.round(seconds);
+  if (rounded < 60) return `${rounded}"`;
+  return formatTime(rounded);
+}
+
 function getIntensityColor(vmaPercentage: number): string {
   if (vmaPercentage < 70) return "text-green-600";
   if (vmaPercentage < 85) return "text-blue-600";
@@ -68,6 +86,13 @@ function getIntensityLabel(vmaPercentage: number): string {
   if (vmaPercentage < 70) return "Allure EF";
   if (vmaPercentage < 90) return "Allure Active";
   return "Allure VMA";
+}
+
+function calculateTargetTime(distanceMeters: number, vmaPercent: number, userVma: number): string {
+  const targetSpeedKmh = userVma * (vmaPercent / 100);
+  if (targetSpeedKmh <= 0) return "-";
+  const timeSeconds = (distanceMeters / 1000) / targetSpeedKmh * 3600;
+  return formatTime(timeSeconds);
 }
 
 // --- COMPOSANT VISUEL DES ÉTAPES ---
@@ -97,49 +122,68 @@ function ProgramSteps({ elements, userVma }: { elements: TrainingElement[], user
                   const isTimeBased = step.type === 'time';
                   const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
                   
-                  // Déterminer la valeur principale à afficher (ce qui est prescrit)
+                  // Calcul de l'allure cible
+                  const targetPace = (userVma && speed > 0) ? formatPace(speed) : null;
+
+                  // Déterminer la valeur principale à afficher
                   const mainValue = isTimeBased ? step.duration : formatDistance(step.distance);
                   
-                  // Calculer la valeur secondaire (l'estimation) si VMA dispo
+                  // Calculer la valeur secondaire et les splits
                   let secondaryValue = null;
-                  let secondaryLabel = "";
+                  let effectiveDistance = step.distance; // Distance estimée ou réelle pour le split 200m
 
                   if (userVma && speed > 0) {
                     if (isTimeBased) {
-                      // C'est du temps -> on estime la distance
-                      // Parsing simple de la durée "MM:SS" ou "MM"
+                      // Temps -> Dist
                       let seconds = 0;
                       if (step.duration.includes(':')) {
                         const [m, s] = step.duration.split(':').map(Number);
                         seconds = (m || 0) * 60 + (s || 0);
                       } else {
-                        seconds = parseFloat(step.duration) * 60; // Assume minutes si nombre seul
+                        seconds = parseFloat(step.duration) * 60;
                       }
-                      
-                      const distMeters = (seconds * speed * 1000) / 3600;
-                      secondaryValue = `~${formatDistance(distMeters)}`;
-                      secondaryLabel = "dist.";
+                      effectiveDistance = (seconds * speed * 1000) / 3600;
+                      secondaryValue = `~${formatDistance(effectiveDistance)}`;
                     } else {
-                      // C'est de la distance -> on estime le temps
+                      // Dist -> Temps
+                      effectiveDistance = step.distance;
                       const timeSeconds = (step.distance / 1000 / speed) * 3600;
                       secondaryValue = formatTime(timeSeconds);
-                      secondaryLabel = "temps";
                     }
                   }
 
+                  // Calcul du Split 200m si la distance > 200m
+                  const split200 = (userVma && speed > 0 && effectiveDistance > 200) 
+                    ? calculateSplit200m(speed) 
+                    : null;
+
                   return (
                     <div key={stepIndex} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border bg-white p-3 shadow-sm">
-                      {/* Gauche: La consigne principale */}
-                      <div className="flex items-center gap-2">
+                      {/* Gauche: Consigne + Temps/Dist + Allure + Split */}
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-800 text-sm">
                           {mainValue}
                         </span>
                         
-                        {/* Valeur calculée / secondaire */}
                         {secondaryValue ? (
-                          <span className="text-sm font-semibold text-primary">
-                            ({secondaryValue})
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-primary flex items-baseline gap-1">
+                              <span>({secondaryValue}</span>
+                              {targetPace && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  @ {targetPace}
+                                </span>
+                              )}
+                              <span>)</span>
+                            </span>
+                            
+                            {/* AJOUT : Temps de passage 200m */}
+                            {split200 && (
+                              <span className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded whitespace-nowrap" title="Temps de passage au 200m">
+                                200m: {split200}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             à {(step.vmaPercentage)}% VMA
@@ -229,7 +273,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
         <CardContent className="border-t pt-6 pb-6 px-4 sm:px-6">
           {session.description && (
             <div className="mb-6 p-3 bg-white rounded-md border text-sm text-muted-foreground italic">
-              &quot;{session.description}&quot;
+              "{session.description}"
             </div>
           )}
 
@@ -258,7 +302,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
             <div>
               <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider text-muted-foreground">
                 Détail de la séance
-                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps/distances cibles)</span>}
+                {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
               </h4>
               <ProgramSteps elements={sessionSteps} userVma={userVma} />
             </div>
@@ -322,10 +366,15 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
             ) : (
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/sign-in">Se connecter <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                  <Link href="/sign-in">
+                    Se connecter
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
-                  <Link href="/sign-up">Créer un compte</Link>
+                  <Link href="/sign-up">
+                    Créer un compte
+                  </Link>
                 </Button>
               </div>
             )}
@@ -378,7 +427,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold">Séances d&apos;entraînement</h3>
+                  <h3 className="text-xl font-semibold">Séances d'entraînement</h3>
                   <p className="text-sm text-muted-foreground">
                     {sessions.length > 0 
                       ? `${sessions.length} séance${sessions.length > 1 ? 's' : ''} planifiée${sessions.length > 1 ? 's' : ''}`
@@ -500,7 +549,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Consultez et téléchargez vos séances d&apos;entraînement planifiées
+                    Consultez et téléchargez vos séances d'entraînement planifiées
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -514,7 +563,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Créez vos propres programmes d&apos;entraînement personnalisés
+                    Créez vos propres programmes d'entraînement personnalisés
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -540,7 +589,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
                   Prêt à commencer ?
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Rejoignez l&apos;équipe ESL et accédez à tous les outils d&apos;entraînement
+                  Rejoignez l'équipe ESL et accédez à tous les outils d'entraînement
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -420,7 +420,6 @@ export function SessionDrawer({
                     {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
                 </h3>
                 
-                {/* --- INTÉGRATION DE LA NOUVELLE VUE VISUELLE --- */}
                 <ProgramSteps elements={sessionSteps} userVma={userVma} />
 
             </div>
