@@ -1,8 +1,9 @@
 'use client';
 
-import { Repeat } from 'lucide-react';
+import { Repeat, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TrainingElement } from '@/lib/vma';
+import { useState } from 'react';
 
 // --- UTILITAIRES DE FORMATAGE ---
 
@@ -76,6 +77,48 @@ export function getIntensityLabel(vmaPercentage: number): string {
   return "Allure VMA";
 }
 
+// --- GÉNÉRATION DU RÉSUMÉ ---
+
+export function generateSessionSummary(elements: TrainingElement[], userVma: number | null): string {
+  if (!elements || elements.length === 0) return "Séance d'entraînement";
+
+  const blockSummaries: string[] = [];
+
+  elements.forEach((block) => {
+    const repetitions = block.repetitions || 1;
+
+    // Récupérer les distances de chaque step du bloc
+    const distances = block.steps.map((step) => {
+      if (step.type === 'time') {
+        // Calculer la distance estimée pour les steps en temps
+        const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
+        if (speed > 0) {
+          const seconds = parseDuration(step.duration);
+          const distanceMeters = (seconds * speed * 1000) / 3600;
+          return Math.round(distanceMeters);
+        }
+        return 0;
+      } else {
+        return step.distance;
+      }
+    }).filter(d => d > 0);
+
+    if (distances.length === 0) return;
+
+    // Formatter les distances (en mètres)
+    const distanceStr = distances.join('-');
+
+    // Ajouter les répétitions si > 1
+    if (repetitions > 1) {
+      blockSummaries.push(`${repetitions}x(${distanceStr})`);
+    } else {
+      blockSummaries.push(distanceStr);
+    }
+  });
+
+  return blockSummaries.join(' ') || "Séance d'entraînement";
+}
+
 // --- COMPOSANT VISUEL DES ÉTAPES ---
 
 interface ProgramStepsProps {
@@ -84,12 +127,35 @@ interface ProgramStepsProps {
 }
 
 export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!elements || elements.length === 0) {
     return <p className="text-sm text-muted-foreground">Aucun détail disponible</p>;
   }
 
+  const handleCopySummary = async () => {
+    const summary = generateSessionSummary(elements, userVma);
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Icône de copie discrète */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleCopySummary}
+          className="opacity-30 hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-100"
+          title="Copier le résumé pour Strava"
+        >
+          <Copy className={cn("h-4 w-4", copied ? "text-green-600" : "text-slate-600")} />
+        </button>
+      </div>
       {elements.map((block, blockIndex) => {
         const isRepetition = block.repetitions > 1;
 
