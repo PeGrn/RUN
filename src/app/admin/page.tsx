@@ -45,9 +45,22 @@ export default async function AdminPage() {
       {/* Main Content */}
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-4 sm:mb-6 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span>{result.users?.length || 0} utilisateur(s) total</span>
+          <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>{result.users?.length || 0} utilisateur(s) total</span>
+            </div>
+            <div className="h-4 w-px bg-border hidden sm:block" />
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-orange-600">
+              <span className="font-medium">
+                {result.users?.filter(u => u.status === 'pending').length || 0} en attente
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+              <span className="font-medium">
+                {result.users?.filter(u => u.status === 'approved').length || 0} approuvés
+              </span>
+            </div>
           </div>
 
           <UsersManagement users={result.users || []} />
