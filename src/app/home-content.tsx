@@ -105,7 +105,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
                 Distance
               </div>
               <div className="text-xl font-bold text-slate-900">
-                {formatDistance(session.totalDistance)}
+                {formatDistance(program?.totalDistance || session.totalDistance)}
               </div>
             </div>
             <div className="p-3 rounded-lg bg-white border shadow-sm">
@@ -114,8 +114,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
                 Durée
               </div>
               <div className="text-xl font-bold text-slate-900">
-                {/* On garde le format HH:MM pour la durée totale, ou on peut passer en friendly aussi */}
-                {formatTime(session.totalTime)}
+                {formatTime(program?.totalTime || session.totalTime)}
               </div>
             </div>
           </div>
