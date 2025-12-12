@@ -13,8 +13,6 @@ import {
   Clock,
   Route,
   Activity,
-  Flag,
-  Beer,
   BarChart3,
   List
 } from "lucide-react";
@@ -131,7 +129,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
         <CardContent className="border-t pt-6 pb-6 px-4 sm:px-6">
           {session.description && (
             <div className="mb-6 p-3 bg-white rounded-md border text-sm text-muted-foreground italic">
-              "{session.description}"
+              &quot;{session.description}&quot;
             </div>
           )}
 
@@ -365,7 +363,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
             <section data-onboarding="sessions-section">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold">Séances d'entraînement</h3>
+                  <h3 className="text-xl font-semibold">Séances d&apos;entraînement</h3>
                   <p className="text-sm text-muted-foreground">
                     {sessions.length > 0
                       ? `${sessions.length} séance${sessions.length > 1 ? 's' : ''} planifiée${sessions.length > 1 ? 's' : ''}`
@@ -445,7 +443,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
               </section>
             )}
 
-            {/* Actions Rapides */}
+            {/* les Actions Rapides */}
             <section>
               <h3 className="text-xl font-semibold mb-6">Actions rapides</h3>
               <div className="grid gap-4 sm:grid-cols-2">
