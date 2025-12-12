@@ -26,6 +26,36 @@ import {
   formatDistance
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
+import { VmaDialog } from '@/components/settings/vma-dialog';
+
+// --- HELPERS ---
+
+/**
+ * Vérifie quels KPIs dépendent de la VMA pour cette session
+ * - Si la session a des étapes basées sur le temps → la distance dépend de la VMA
+ * - Si la session a des étapes basées sur la distance → la durée dépend de la VMA
+ */
+function getSessionVmaDependencies(sessionSteps: TrainingElement[]): {
+  distanceDependsOnVma: boolean;
+  durationDependsOnVma: boolean;
+} {
+  if (!sessionSteps || sessionSteps.length === 0) {
+    return { distanceDependsOnVma: false, durationDependsOnVma: false };
+  }
+
+  const hasTimeBasedSteps = sessionSteps.some(block =>
+    block.steps.some(step => step.type === 'time')
+  );
+
+  const hasDistanceBasedSteps = sessionSteps.some(block =>
+    block.steps.some(step => step.type !== 'time')
+  );
+
+  return {
+    distanceDependsOnVma: hasTimeBasedSteps,
+    durationDependsOnVma: hasDistanceBasedSteps,
+  };
+}
 
 // --- SESSION DRAWER ---
 
@@ -49,8 +79,9 @@ export function SessionDrawer({
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [vmaDialogOpen, setVmaDialogOpen] = useState(false);
   const { user } = useUser();
-  
+
   // Récupérer la VMA de l'utilisateur
   const userVma = (user?.publicMetadata?.vma as number) || null;
 
@@ -198,28 +229,48 @@ export function SessionDrawer({
                 {events.length > 0 && (
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Entraînements</h3>
                 )}
-                {sessions.map((session) => (
-                  <button
-                    key={session.id}
-                    onClick={() => setSelectedSession(session)}
-                    className="w-full p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left flex items-center justify-between group"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-1">{session.name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Route className="h-4 w-4" />
-                          {formatDistance(session.totalDistance)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {formatTime(session.totalTime)}
-                        </span>
-                      </div>
+                {sessions.map((session) => {
+                  const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
+                  const { distanceDependsOnVma, durationDependsOnVma } = getSessionVmaDependencies(sessionSteps);
+                  const shouldBlurDistance = !userVma && distanceDependsOnVma;
+                  const shouldBlurDuration = !userVma && durationDependsOnVma;
+                  const shouldShowVmaPrompt = shouldBlurDistance || shouldBlurDuration;
+
+                  return (
+                    <div key={session.id} className="relative">
+                      <button
+                        onClick={() => setSelectedSession(session)}
+                        className="w-full p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left flex items-center justify-between group"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg mb-1">{session.name}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className={`flex items-center gap-1 ${shouldBlurDistance ? 'blur-sm select-none' : ''}`}>
+                              <Route className="h-4 w-4" />
+                              {formatDistance(session.totalDistance)}
+                            </span>
+                            <span className={`flex items-center gap-1 ${shouldBlurDuration ? 'blur-sm select-none' : ''}`}>
+                              <Clock className="h-4 w-4" />
+                              {formatTime(session.totalTime)}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </button>
+                      {shouldShowVmaPrompt && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVmaDialogOpen(true);
+                          }}
+                          className="absolute bottom-2 right-12 text-xs text-orange-600 hover:text-orange-700 hover:underline font-medium"
+                        >
+                          Configurer ma VMA
+                        </button>
+                      )}
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -236,6 +287,10 @@ export function SessionDrawer({
   }
 
   const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
+  const { distanceDependsOnVma, durationDependsOnVma } = getSessionVmaDependencies(sessionSteps);
+  const shouldBlurDistance = !userVma && distanceDependsOnVma;
+  const shouldBlurDuration = !userVma && durationDependsOnVma;
+  const shouldShowVmaPrompt = shouldBlurDistance || shouldBlurDuration;
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -261,13 +316,21 @@ export function SessionDrawer({
                         {selectedDate && format(selectedDate, 'EEEE d MMMM', { locale: fr })}
                     </SheetDescription>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                    <Badge variant="secondary" className="font-mono">
+                <div className="flex flex-col items-end gap-1 relative">
+                    <Badge variant="secondary" className={`font-mono ${shouldBlurDistance ? 'blur-sm select-none' : ''}`}>
                         {formatDistance(session.totalDistance)}
                     </Badge>
-                    <Badge variant="outline" className="font-mono">
+                    <Badge variant="outline" className={`font-mono ${shouldBlurDuration ? 'blur-sm select-none' : ''}`}>
                         {formatTime(session.totalTime)}
                     </Badge>
+                    {shouldShowVmaPrompt && (
+                      <button
+                        onClick={() => setVmaDialogOpen(true)}
+                        className="absolute -bottom-6 right-0 text-xs text-orange-600 hover:text-orange-700 hover:underline font-medium whitespace-nowrap"
+                      >
+                        Configurer ma VMA
+                      </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -285,20 +348,27 @@ export function SessionDrawer({
             <div className="space-y-3 mb-8">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
                     Détail de la séance
-                    {!userVma && <span className="ml-2 text-xs normal-case text-orange-600">(Configurez votre VMA pour voir les temps)</span>}
+                    {!userVma && (
+                      <button
+                        onClick={() => setVmaDialogOpen(true)}
+                        className="ml-2 text-xs normal-case text-orange-600 hover:text-orange-700 hover:underline"
+                      >
+                        (Configurez votre VMA pour voir les allures)
+                      </button>
+                    )}
                 </h3>
-                
+
                 {/* INTÉGRATION DE ProgramSteps */}
                 <ProgramSteps elements={sessionSteps} userVma={userVma} />
-                
+
             </div>
         </div>
 
         {/* Footer Actions (Sticky) */}
         <div className="pt-4 mt-auto border-t bg-background sticky bottom-0 z-10 shrink-0">
             <div className="grid grid-cols-2 gap-3">
-                <Button 
-                    variant="default" 
+                <Button
+                    variant="default"
                     onClick={() => handleDownloadPdf(session.id, session.name)}
                     disabled={downloading}
                     className="w-full"
@@ -306,7 +376,7 @@ export function SessionDrawer({
                     {downloading ? <span className="animate-pulse">...</span> : <Download className="h-4 w-4 mr-2" />}
                     PDF
                 </Button>
-                <Button 
+                <Button
                     variant="outline"
                     onClick={() => handleSendEmail(session.id, session.name)}
                     disabled={sending}
@@ -318,6 +388,11 @@ export function SessionDrawer({
             </div>
         </div>
       </SheetContent>
+      <VmaDialog
+        open={vmaDialogOpen}
+        onOpenChange={setVmaDialogOpen}
+        currentVma={userVma || undefined}
+      />
     </Sheet>
   );
 }

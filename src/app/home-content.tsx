@@ -36,6 +36,35 @@ import {
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 
+// --- HELPERS ---
+
+/**
+ * Vérifie quels KPIs dépendent de la VMA pour cette session
+ * - Si la session a des étapes basées sur le temps → la distance dépend de la VMA
+ * - Si la session a des étapes basées sur la distance → la durée dépend de la VMA
+ */
+function getSessionVmaDependencies(sessionSteps: TrainingElement[]): {
+  distanceDependsOnVma: boolean;
+  durationDependsOnVma: boolean;
+} {
+  if (!sessionSteps || sessionSteps.length === 0) {
+    return { distanceDependsOnVma: false, durationDependsOnVma: false };
+  }
+
+  const hasTimeBasedSteps = sessionSteps.some(block =>
+    block.steps.some(step => step.type === 'time')
+  );
+
+  const hasDistanceBasedSteps = sessionSteps.some(block =>
+    block.steps.some(step => step.type !== 'time')
+  );
+
+  return {
+    distanceDependsOnVma: hasTimeBasedSteps,
+    durationDependsOnVma: hasDistanceBasedSteps,
+  };
+}
+
 interface WeekData {
   sessions: TrainingSession[];
   events: Event[];
@@ -63,6 +92,10 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
     const calcVma = userVma || (session as any).vma || 15;
     return calculateVMAProgram(steps, calcVma);
   }, [sessionSteps, userVma, session]);
+
+  const { distanceDependsOnVma, durationDependsOnVma } = getSessionVmaDependencies(sessionSteps);
+  const shouldBlurDistance = !userVma && distanceDependsOnVma;
+  const shouldBlurDuration = !userVma && durationDependsOnVma;
 
   return (
     <Card className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
@@ -99,23 +132,33 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
           )}
 
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="p-3 rounded-lg bg-white border shadow-sm">
+            <div className={`p-3 rounded-lg bg-white border shadow-sm ${shouldBlurDistance ? 'relative' : ''}`}>
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
                 <Route className="h-3 w-3" />
                 Distance
               </div>
-              <div className="text-xl font-bold text-slate-900">
+              <div className={`text-xl font-bold text-slate-900 ${shouldBlurDistance ? 'blur-sm select-none' : ''}`}>
                 {formatDistance(program?.totalDistance || session.totalDistance)}
               </div>
+              {shouldBlurDistance && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs text-orange-600 font-medium">VMA requise</span>
+                </div>
+              )}
             </div>
-            <div className="p-3 rounded-lg bg-white border shadow-sm">
+            <div className={`p-3 rounded-lg bg-white border shadow-sm ${shouldBlurDuration ? 'relative' : ''}`}>
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
                 <Clock className="h-3 w-3" />
                 Durée
               </div>
-              <div className="text-xl font-bold text-slate-900">
+              <div className={`text-xl font-bold text-slate-900 ${shouldBlurDuration ? 'blur-sm select-none' : ''}`}>
                 {formatTime(program?.totalTime || session.totalTime)}
               </div>
+              {shouldBlurDuration && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs text-orange-600 font-medium">VMA requise</span>
+                </div>
+              )}
             </div>
           </div>
 
