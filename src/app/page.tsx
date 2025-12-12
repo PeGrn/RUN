@@ -48,17 +48,26 @@ export default async function Home() {
   const userRole = (user?.publicMetadata?.role as string) || 'athlete';
   const userStatus = (user?.publicMetadata?.status as string) || 'pending';
 
-  // Récupérer semaine courante et semaine prochaine
-  const [currentWeek, nextWeek] = await Promise.all([
-    getSessionsAndEvents(0),
-    getSessionsAndEvents(1),
-  ]);
+  // IMPORTANT : Ne charger les séances que si l'utilisateur est approuvé
+  // Si l'utilisateur n'est pas approuvé, on affiche la version publique de la page
+  const isApproved = userStatus === 'approved';
+
+  // Récupérer semaine courante et semaine prochaine UNIQUEMENT si approuvé
+  const [currentWeek, nextWeek] = isApproved
+    ? await Promise.all([
+        getSessionsAndEvents(0),
+        getSessionsAndEvents(1),
+      ])
+    : [
+        { sessions: [], events: [], weekStart: new Date(), weekEnd: new Date() },
+        { sessions: [], events: [], weekStart: new Date(), weekEnd: new Date() },
+      ];
 
   const firstName = user?.firstName || "Athlète";
 
   return (
     <HomeContent
-      userId={userId}
+      userId={isApproved ? userId : null} // Passer null si non approuvé pour afficher la version publique
       firstName={firstName}
       userVma={userVma} // On passe la VMA au composant client
       userRole={userRole}

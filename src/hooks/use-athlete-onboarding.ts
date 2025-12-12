@@ -61,7 +61,7 @@ export function useAthleteOnboarding({
         element: '[data-onboarding="sessions-section"]',
         popover: {
           title: '🏃 Vos séances d\'entraînement',
-          description: 'Retrouvez ici toutes vos séances planifiées pour la semaine. Cliquez sur une séance pour voir les détails, le graphique de vitesse et télécharger le PDF.',
+          description: 'Retrouvez ici toutes vos séances planifiées pour la semaine. Cliquez sur une séance pour voir les détails, le graphique de vitesse (sur PC) et télécharger le PDF.',
           side: 'top',
           align: 'start',
         },
@@ -69,7 +69,7 @@ export function useAthleteOnboarding({
       {
         popover: {
           title: '✅ C\'est parti !',
-          description: 'Vous êtes prêt à utiliser la plateforme. Si vous avez des questions, n\'hésitez pas à contacter votre coach. Bon entraînement ! 💪',
+          description: 'Vous êtes prêt à utiliser la plateforme. Bon entraînement ! 💪',
         },
       },
     ];

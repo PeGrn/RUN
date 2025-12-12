@@ -39,6 +39,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker'; // Import nécessaire pour le type
 import type { TrainingSession, Event } from '@prisma/client';
+import { EditEventDialog } from '@/components/events/edit-event-dialog';
 
 type HistoryItem = 
   | { type: 'session'; data: TrainingSession; date: Date }
@@ -72,6 +73,10 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'session' | 'event', name: string } | null>(null);
+
+  // États pour l'édition d'événement
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
 
   // --- FILTRES ---
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,6 +172,16 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
 
   const handleDuplicate = (session: TrainingSession) => {
     router.push(`/training?duplicate=${session.id}`);
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setEditEventDialogOpen(true);
+  };
+
+  const handleEventUpdated = () => {
+    // Rafraîchir la page pour obtenir les données mises à jour
+    router.refresh();
   };
 
   const confirmDelete = (id: string, type: 'session' | 'event', name: string) => {
@@ -438,15 +453,23 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                       )}
                     </div>
 
-                    {/* Bouton d'action Événement */}
-                    <div className="pt-2 mt-auto">
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
+                    {/* Boutons d'action Événement */}
+                    <div className="space-y-2 pt-2 mt-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleEditEvent(event)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" /> Modifier
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         className="w-full bg-white text-destructive border border-destructive hover:bg-destructive hover:text-white"
                         onClick={() => confirmDelete(event.id, 'event', event.title)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" /> Supprimer l&apos;événement !
+                        <Trash2 className="h-4 w-4 mr-2" /> Supprimer
                       </Button>
                     </div>
                   </CardContent>
@@ -463,6 +486,16 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
           open={emailDialogOpen}
           onOpenChange={setEmailDialogOpen}
           session={selectedSession}
+        />
+      )}
+
+      {/* Dialog de modification d'événement */}
+      {selectedEvent && (
+        <EditEventDialog
+          open={editEventDialogOpen}
+          onOpenChange={setEditEventDialogOpen}
+          event={selectedEvent}
+          onSuccess={handleEventUpdated}
         />
       )}
 
