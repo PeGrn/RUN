@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Save, Mail, Calendar as CalendarIcon } from 'lucide-react';
-import { createTrainingSession } from '@/actions/training-sessions';
-import { sendPdfEmail } from '@/actions/email';
-import { generatePDFBuffer } from '@/lib/pdf-export';
+import { Save, Mail, Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { createTrainingSession, updateTrainingSession } from '@/actions/training-sessions';
 import { TrainingElement } from '@/lib/vma';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -32,6 +30,8 @@ interface SavePdfDialogProps {
   vma: number;
   totalDistance: number;
   totalTime: number;
+  editingSessionId?: string | null;
+  editingSessionData?: { name: string; description: string; sessionDate: Date | null } | null;
 }
 
 export function SavePdfDialog({
@@ -41,7 +41,11 @@ export function SavePdfDialog({
   vma,
   totalDistance,
   totalTime,
+  editingSessionId,
+  editingSessionData,
 }: SavePdfDialogProps) {
+  const isEditMode = !!editingSessionId;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
@@ -49,8 +53,18 @@ export function SavePdfDialog({
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'save' | 'email' | null>(null);
 
-  // Fonction utilitaire pour préparer le FormData
-  const prepareFormData = (pdfBlob: Blob, fileName: string) => {
+  // Initialiser les valeurs si en mode édition
+  useEffect(() => {
+    if (isEditMode && editingSessionData) {
+      setName(editingSessionData.name);
+      setDescription(editingSessionData.description);
+      setSessionDate(editingSessionData.sessionDate || undefined);
+      setMode('save'); // Mode sauvegarde par défaut en édition
+    }
+  }, [isEditMode, editingSessionData]);
+
+  // Fonction utilitaire pour préparer le FormData (sans PDF, génération à la demande)
+  const prepareFormData = () => {
     const formData = new FormData();
 
     formData.append('name', name);
@@ -74,9 +88,7 @@ export function SavePdfDialog({
     // Important : On stringify le tableau d'objets pour le passer dans le FormData
     formData.append('steps', JSON.stringify(builderElements));
 
-    // Création d'un objet File à partir du Blob du PDF
-    const file = new File([pdfBlob], `${fileName}.pdf`, { type: 'application/pdf' });
-    formData.append('file', file);
+    // Plus besoin d'envoyer le PDF - il sera généré à la demande
 
     return formData;
   };
@@ -95,23 +107,25 @@ export function SavePdfDialog({
     setLoading(true);
 
     try {
-      // 1. Générer le PDF
-      const pdfOutput = generatePDFBuffer(builderElements, name);
-      // Convertir le Buffer en Uint8Array pour la compatibilité Blob
-      const pdfBlob = new Blob([new Uint8Array(pdfOutput)], { type: 'application/pdf' });
+      // Préparer le FormData avec les données JSON
+      const formData = prepareFormData();
 
-      // 2. Préparer le FormData
-      const formData = prepareFormData(pdfBlob, name);
-
-      // 3. Sauvegarder dans Minio et BDD via la Server Action
-      const result = await createTrainingSession(formData);
+      // Mode édition ou création
+      const result = isEditMode && editingSessionId
+        ? await updateTrainingSession(editingSessionId, formData)
+        : await createTrainingSession(formData);
 
       if (result.success) {
-        toast.success('Séance sauvegardée avec succès');
+        toast.success(isEditMode ? 'Séance modifiée avec succès' : 'Séance sauvegardée avec succès');
         setName('');
         setDescription('');
         setSessionDate(undefined);
         onOpenChange(false);
+
+        // Recharger la page pour voir les changements
+        if (isEditMode) {
+          window.location.href = '/sessions';
+        }
       } else {
         toast.error('Erreur lors de la sauvegarde');
       }
@@ -142,34 +156,27 @@ export function SavePdfDialog({
     setLoading(true);
 
     try {
-      // 1. Générer le PDF
-      const pdfOutput = generatePDFBuffer(builderElements, name);
-      const pdfBlob = new Blob([new Uint8Array(pdfOutput)], { type: 'application/pdf' });
+      // 1. Préparer le FormData pour la sauvegarde
+      const formData = prepareFormData();
 
-      // 2. Préparer le FormData pour la sauvegarde
-      const formData = prepareFormData(pdfBlob, name);
-
-      // 3. Sauvegarder
+      // 2. Sauvegarder (PDF généré à la demande)
       const saveResult = await createTrainingSession(formData);
 
-      if (!saveResult.success) {
+      if (!saveResult.success || !saveResult.session) {
         toast.error('Erreur lors de la sauvegarde');
         return;
       }
 
-      // 4. Envoyer par email
-      // Note : sendPdfEmail attend probablement un ArrayBuffer ou FormData aussi maintenant.
-      // Si sendPdfEmail n'a pas été modifié pour accepter FormData, on doit convertir le Blob en ArrayBuffer.
-      const arrayBuffer = await pdfBlob.arrayBuffer(); 
-      // Pour les Server Actions, il est souvent préférable de passer l'ArrayBuffer encodé ou brut
-      // selon comment ta fonction sendPdfEmail est codée.
-      
-      const emailResult = await sendPdfEmail(
-        Buffer.from(arrayBuffer) as any, // Cast "as any" temporaire si le type côté client râle sur Buffer
-        name,
-        email,
-        `Programme VMA - ${name}`
-      );
+      // 3. Envoyer par email (PDF généré à la demande côté serveur)
+      // Utiliser sendSessionEmail au lieu de sendPdfEmail
+      const { sendSessionEmail } = await import('@/actions/email');
+
+      const emailResult = await sendSessionEmail({
+        sessionId: saveResult.session.id,
+        sessionName: name,
+        toEmail: email,
+        sessionDate: sessionDate,
+      });
 
       if (emailResult.success) {
         toast.success(`Séance sauvegardée et envoyée à ${email}`);
@@ -189,7 +196,10 @@ export function SavePdfDialog({
     }
   };
 
-  if (!mode) {
+  // En mode édition, afficher directement le formulaire
+  if (isEditMode) {
+    // Continue to the form below
+  } else if (!mode) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
@@ -248,13 +258,25 @@ export function SavePdfDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {mode === 'save' ? <Save className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
-            {mode === 'save' ? 'Sauvegarder la séance' : 'Sauvegarder et envoyer'}
+            {isEditMode ? (
+              <>
+                <Edit className="h-5 w-5" />
+                Modifier la séance
+              </>
+            ) : (
+              <>
+                {mode === 'save' ? <Save className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
+                {mode === 'save' ? 'Sauvegarder la séance' : 'Sauvegarder et envoyer'}
+              </>
+            )}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'save'
-              ? 'Enregistrez cette séance dans votre historique'
-              : 'Enregistrez et envoyez cette séance par email'
+            {isEditMode
+              ? 'Modifiez les informations de cette séance'
+              : (mode === 'save'
+                  ? 'Enregistrez cette séance dans votre historique'
+                  : 'Enregistrez et envoyez cette séance par email'
+                )
             }
           </DialogDescription>
         </DialogHeader>
@@ -340,9 +362,12 @@ export function SavePdfDialog({
           >
             {loading
               ? 'Traitement...'
-              : mode === 'save'
-              ? 'Sauvegarder'
-              : 'Sauvegarder et envoyer'
+              : isEditMode
+              ? 'Enregistrer les modifications'
+              : (mode === 'save'
+                  ? 'Sauvegarder'
+                  : 'Sauvegarder et envoyer'
+                )
             }
           </Button>
         </DialogFooter>

@@ -45,6 +45,8 @@ export default async function Home() {
   // ÉTAPE 3 : Récupérer la VMA stockée dans les métadonnées
   // On cast en number ou null si non défini
   const userVma = (user?.publicMetadata?.vma as number) || null;
+  const userRole = (user?.publicMetadata?.role as string) || 'athlete';
+  const userStatus = (user?.publicMetadata?.status as string) || 'pending';
 
   // Récupérer semaine courante et semaine prochaine
   const [currentWeek, nextWeek] = await Promise.all([
@@ -55,10 +57,12 @@ export default async function Home() {
   const firstName = user?.firstName || "Athlète";
 
   return (
-    <HomeContent 
+    <HomeContent
       userId={userId}
       firstName={firstName}
       userVma={userVma} // On passe la VMA au composant client
+      userRole={userRole}
+      userStatus={userStatus}
       currentWeek={currentWeek}
       nextWeek={nextWeek}
     />

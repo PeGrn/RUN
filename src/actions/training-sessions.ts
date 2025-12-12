@@ -2,6 +2,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { uploadToS3, getS3Object, getSignedDownloadUrl } from '@/lib/s3';
+import { generatePDFBuffer } from '@/lib/pdf-export';
+import type { TrainingElement } from '@/lib/vma';
 
 // On garde l'interface pour le typage interne si besoin
 export interface CreateSessionInput {
@@ -13,8 +15,8 @@ export interface CreateSessionInput {
 }
 
 /**
- * Crée une nouvelle séance et upload le PDF vers Minio
- * Utilise FormData pour gérer le fichier binaire proprement depuis le client
+ * Crée une nouvelle séance (génération PDF à la demande)
+ * Stocke uniquement les données JSON, le PDF sera généré quand nécessaire
  */
 export async function createTrainingSession(formData: FormData) {
   try {
@@ -32,19 +34,8 @@ export async function createTrainingSession(formData: FormData) {
     const sessionDateStr = formData.get('sessionDate') as string | null;
     const sessionDate = sessionDateStr ? new Date(sessionDateStr) : null;
 
-    const file = formData.get('file') as File;
-    
-    if (!file || file.size === 0) {
-      throw new Error('No PDF file provided');
-    }
-
-    const bytes = await file.arrayBuffer();
-    const pdfBuffer = Buffer.from(bytes);
-
-    const sanitizedName = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const fileName = `${sanitizedName}.pdf`;
-
-    const uploadResult = await uploadToS3(pdfBuffer, fileName, 'application/pdf');
+    // Plus besoin de file, uploadToS3, etc.
+    // On stocke uniquement les données - le PDF sera généré à la demande
 
     const session = await prisma.trainingSession.create({
       data: {
@@ -54,9 +45,8 @@ export async function createTrainingSession(formData: FormData) {
         totalDistance,
         totalTime,
         steps,
-        pdfUrl: uploadResult.url,
-        pdfKey: uploadResult.key,
         sessionDate,
+        // pdfUrl et pdfKey restent null (génération à la demande)
       },
     });
 
@@ -68,7 +58,7 @@ export async function createTrainingSession(formData: FormData) {
 }
 
 /**
- * Récupère le buffer PDF d'une séance (Utilisé pour l'envoi d'email serveur)
+ * Génère le PDF à la demande et retourne le buffer (Utilisé pour l'envoi d'email serveur)
  */
 export async function getSessionPdfBuffer(sessionId: string): Promise<Buffer | null> {
   try {
@@ -79,23 +69,34 @@ export async function getSessionPdfBuffer(sessionId: string): Promise<Buffer | n
 
     const session = await prisma.trainingSession.findUnique({
       where: { id: sessionId },
-      select: { pdfKey: true },
+      select: { name: true, steps: true, pdfKey: true },
     });
 
-    if (!session || !session.pdfKey) {
+    if (!session) {
       return null;
     }
 
-    return await getS3Object(session.pdfKey);
+    // Fallback : si une ancienne session a encore un pdfKey, on utilise S3
+    if (session.pdfKey) {
+      return await getS3Object(session.pdfKey);
+    }
+
+    // Génération à la demande du PDF depuis le JSON
+    const steps = session.steps as unknown as TrainingElement[];
+    if (!steps || steps.length === 0) {
+      return null;
+    }
+
+    // Générer et retourner le PDF buffer
+    return generatePDFBuffer(steps, session.name);
   } catch (error) {
-    console.error('Error fetching PDF buffer:', error);
+    console.error('Error generating PDF buffer:', error);
     return null;
   }
 }
 
 /**
- * --- FONCTION AJOUTÉE ---
- * Récupère l'URL signée (ou publique) pour le téléchargement côté client
+ * Génère le PDF à la demande et retourne une data URL pour le téléchargement
  */
 export async function getSessionPdfUrl(sessionId: string) {
   try {
@@ -106,24 +107,80 @@ export async function getSessionPdfUrl(sessionId: string) {
 
     const session = await prisma.trainingSession.findUnique({
       where: { id: sessionId },
-      select: { pdfKey: true, pdfUrl: true },
+      select: { name: true, steps: true, pdfKey: true, pdfUrl: true },
     });
 
     if (!session) {
       return { success: false, error: 'Session not found' };
     }
 
-    // Si on a une clé, on génère une URL signée fraiche via S3
+    // Fallback : si une ancienne session a encore un pdfKey, on utilise S3
     if (session.pdfKey) {
       const url = await getSignedDownloadUrl(session.pdfKey);
       return { success: true, url };
     }
 
-    // Fallback sur l'URL stockée si pas de clé (anciens enregistrements potentiels)
-    return { success: true, url: session.pdfUrl };
+    // Génération à la demande du PDF depuis le JSON
+    const steps = session.steps as unknown as TrainingElement[];
+    if (!steps || steps.length === 0) {
+      return { success: false, error: 'No steps data found' };
+    }
+
+    // Générer le PDF buffer
+    const pdfBuffer = generatePDFBuffer(steps, session.name);
+
+    // Convertir en base64 pour data URL
+    const base64 = pdfBuffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64}`;
+
+    return { success: true, url: dataUrl };
   } catch (error) {
-    console.error('Error getting PDF URL:', error);
-    return { success: false, error: 'Failed to get PDF URL' };
+    console.error('Error generating PDF:', error);
+    return { success: false, error: 'Failed to generate PDF' };
+  }
+}
+
+/**
+ * Met à jour une séance existante (génération PDF à la demande)
+ */
+export async function updateTrainingSession(id: string, formData: FormData) {
+  try {
+    // Validation de l'ID
+    if (!id || typeof id !== 'string') {
+      return { success: false, error: 'Invalid session ID' };
+    }
+
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const vma = parseFloat(formData.get('vma') as string);
+    const totalDistance = parseFloat(formData.get('totalDistance') as string);
+    const totalTime = parseFloat(formData.get('totalTime') as string);
+
+    // Parsing du JSON pour les étapes
+    const stepsJson = formData.get('steps') as string;
+    const steps = stepsJson ? JSON.parse(stepsJson) : [];
+
+    // Parsing de la date (optionnel)
+    const sessionDateStr = formData.get('sessionDate') as string | null;
+    const sessionDate = sessionDateStr ? new Date(sessionDateStr) : null;
+
+    const session = await prisma.trainingSession.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        vma,
+        totalDistance,
+        totalTime,
+        steps,
+        sessionDate,
+      },
+    });
+
+    return { success: true, session };
+  } catch (error) {
+    console.error('Error updating training session:', error);
+    return { success: false, error: 'Failed to update training session' };
   }
 }
 

@@ -26,10 +26,59 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
   const router = useRouter();
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
-  
+
   // États pour les dialogues
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false); // Nouvel état pour l'événement
+
+  // État pour le mode édition
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingSessionData, setEditingSessionData] = useState<{ name: string; description: string; sessionDate: Date | null } | null>(null);
+
+  // Handle edit from query param
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (!editId || !isLoaded) return;
+
+    const loadEditSession = async () => {
+      try {
+        const result = await getTrainingSessionById(editId);
+
+        if (result.success && result.session) {
+          const steps = result.session.steps as unknown as TrainingElement[];
+
+          // Validation des steps
+          const isValid = Array.isArray(steps) && steps.every(
+            (element) => element.steps && Array.isArray(element.steps)
+          );
+
+          if (isValid) {
+            setBuilderElements(steps);
+            setEditingSessionId(editId);
+            setEditingSessionData({
+              name: result.session.name,
+              description: result.session.description || '',
+              sessionDate: result.session.sessionDate ? new Date(result.session.sessionDate) : null,
+            });
+            toast.success(`Séance "${result.session.name}" chargée en mode édition`);
+
+            // Nettoyer l'URL en retirant le query param
+            router.replace('/training');
+          } else {
+            toast.error('Données de la séance invalides');
+          }
+        } else {
+          toast.error('Séance introuvable');
+        }
+      } catch (error) {
+        console.error('Error loading edit session:', error);
+        toast.error('Erreur lors du chargement de la séance');
+      }
+    };
+
+    loadEditSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isLoaded]);
 
   // Handle duplication from query param
   useEffect(() => {
@@ -235,11 +284,20 @@ export default function TrainingPageClient({ userRole }: TrainingPageClientProps
       {program && (
         <SavePdfDialog
           open={saveDialogOpen}
-          onOpenChange={setSaveDialogOpen}
+          onOpenChange={(open) => {
+            setSaveDialogOpen(open);
+            // Réinitialiser le mode édition quand on ferme le dialog
+            if (!open && editingSessionId) {
+              setEditingSessionId(null);
+              setEditingSessionData(null);
+            }
+          }}
           builderElements={builderElements}
           vma={vma}
           totalDistance={program.totalDistance}
           totalTime={program.totalTime}
+          editingSessionId={editingSessionId}
+          editingSessionData={editingSessionData}
         />
       )}
 

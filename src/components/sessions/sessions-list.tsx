@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Download, Mail, Trash2, Calendar, Route, Clock, Copy, Search, X } from 'lucide-react';
+import { Download, Mail, Trash2, Calendar, Route, Clock, Copy, Search, X, Edit } from 'lucide-react';
 import { formatTime } from '@/lib/vma/calculator';
 import { SendEmailDialog } from './send-email-dialog';
 import { DeleteSessionDialog } from './delete-session-dialog';
@@ -95,6 +95,10 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
   const handleSendEmail = (session: Session) => {
     setSelectedSession(session);
     setEmailDialogOpen(true);
+  };
+
+  const handleEdit = (session: Session) => {
+    router.push(`/training?edit=${session.id}`);
   };
 
   const handleDuplicate = (session: Session) => {
@@ -315,41 +319,50 @@ export function SessionsList({ sessions: initialSessions }: SessionsListProps) {
 
               {/* Actions */}
               <div className="space-y-2 pt-2">
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
                     onClick={() => handleDownload(session)}
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    Télécharger
+                    <span className="hidden sm:inline">Télécharger</span>
+                    <span className="sm:hidden">PDF</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
                     onClick={() => handleSendEmail(session)}
                   >
                     <Mail className="h-4 w-4 mr-1" />
-                    Envoyer
+                    <span className="hidden sm:inline">Envoyer</span>
+                    <span className="sm:hidden">Email</span>
                   </Button>
                   <Button
-                    variant="destructive"
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(session)}
+                    onClick={() => handleEdit(session)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Edit className="h-4 w-4 mr-1" />
+                    Modifier
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDuplicate(session)}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Dupliquer
                   </Button>
                 </div>
                 <Button
-                  variant="secondary"
+                  variant="destructive"
                   size="sm"
                   className="w-full"
-                  onClick={() => handleDuplicate(session)}
+                  onClick={() => handleDelete(session)}
                 >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Dupliquer
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Supprimer
                 </Button>
               </div>
             </CardContent>

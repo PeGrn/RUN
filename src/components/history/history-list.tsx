@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Download, Mail, Trash2, Calendar as CalendarIcon, Route, Clock, Copy, Search, X, 
-  Flag, Beer, CalendarDays, Filter 
+import {
+  Download, Mail, Trash2, Calendar as CalendarIcon, Route, Clock, Copy, Search, X,
+  Flag, Beer, CalendarDays, Filter, Edit
 } from 'lucide-react';
 import { formatTime } from '@/lib/vma/calculator';
 import { SendEmailDialog } from '@/components/sessions/send-email-dialog';
@@ -159,6 +159,10 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
   const handleSendEmail = (session: TrainingSession) => {
     setSelectedSession(session);
     setEmailDialogOpen(true);
+  };
+
+  const handleEdit = (session: TrainingSession) => {
+    router.push(`/training?edit=${session.id}`);
   };
 
   const handleDuplicate = (session: TrainingSession) => {
@@ -379,19 +383,24 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
 
                     {/* Boutons d'action Session */}
                     <div className="space-y-2 pt-2 mt-auto">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleDownload(session)}>
-                          <Download className="h-4 w-4 mr-1" /> PDF
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleDownload(session)}>
+                          <Download className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">PDF</span>
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleSendEmail(session)}>
-                          <Mail className="h-4 w-4 mr-1" /> Envoyer
+                        <Button variant="outline" size="sm" onClick={() => handleSendEmail(session)}>
+                          <Mail className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Envoyer</span>
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => confirmDelete(session.id, 'session', session.name)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(session)}>
+                          <Edit className="h-4 w-4 mr-1" /> Modifier
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDuplicate(session)}>
+                          <Copy className="h-4 w-4 mr-1" /> Dupliquer
                         </Button>
                       </div>
-                      <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDuplicate(session)}>
-                        <Copy className="h-4 w-4 mr-1" /> Dupliquer
+                      <Button variant="destructive" size="sm" className="w-full" onClick={() => confirmDelete(session.id, 'session', session.name)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Supprimer
                       </Button>
                     </div>
                   </CardContent>
@@ -437,7 +446,7 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                         className="w-full bg-white text-destructive border border-destructive hover:bg-destructive hover:text-white"
                         onClick={() => confirmDelete(event.id, 'event', event.title)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" /> Supprimer l&apos;événement
+                        <Trash2 className="h-4 w-4 mr-2" /> Supprimer l&apos;événement !
                       </Button>
                     </div>
                   </CardContent>

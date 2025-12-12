@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from "next/link";
 import {
   CalendarDays,
@@ -35,6 +35,8 @@ import {
   formatDistance
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
+import { useAthleteOnboarding } from '@/hooks/use-athlete-onboarding';
+import { SessionActions } from '@/components/training/session-actions';
 
 // --- HELPERS ---
 
@@ -76,6 +78,8 @@ interface HomeContentProps {
   userId: string | null;
   firstName: string;
   userVma: number | null;
+  userRole: string;
+  userStatus: string;
   currentWeek: WeekData;
   nextWeek: WeekData;
 }
@@ -163,42 +167,65 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
           </div>
 
           {sessionSteps.length > 0 && (
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="details" className="flex items-center gap-2">
-                  <List className="h-4 w-4" />
-                  <span className="hidden sm:inline">Détail</span>
-                  <span className="sm:hidden">Détail</span>
-                </TabsTrigger>
-                <TabsTrigger value="graph" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Graphique</span>
-                  <span className="sm:hidden">Graphique</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="mt-0">
+            <>
+              {/* Mobile: Détail uniquement (pas de tabs) */}
+              <div className="md:hidden">
                 {!userVma && (
                   <div className="mb-4 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100 flex items-center justify-center">
                     ⚠️ Configurez votre VMA pour voir vos allures personnalisées
                   </div>
                 )}
                 <ProgramSteps elements={sessionSteps} userVma={userVma} />
-              </TabsContent>
-              
-              <TabsContent value="graph" className="mt-0">
-                {program ? (
-                  <div className="bg-white p-2 sm:p-4 rounded-lg border shadow-sm">
-                    <SpeedChart program={program} />
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Données insuffisantes pour le graphique
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+              </div>
+
+              {/* Desktop: Tabs avec Détail + Graphique */}
+              <div className="hidden md:block">
+                <Tabs defaultValue="details" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="details" className="flex items-center gap-2">
+                      <List className="h-4 w-4" />
+                      <span>Détail</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="graph" className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Graphique</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="details" className="mt-0">
+                    {!userVma && (
+                      <div className="mb-4 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100 flex items-center justify-center">
+                        ⚠️ Configurez votre VMA pour voir vos allures personnalisées
+                      </div>
+                    )}
+                    <ProgramSteps elements={sessionSteps} userVma={userVma} />
+                  </TabsContent>
+
+                  <TabsContent value="graph" className="mt-0">
+                    {program ? (
+                      <div className="bg-white p-2 sm:p-4 rounded-lg border shadow-sm">
+                        <SpeedChart program={program} />
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        Données insuffisantes pour le graphique
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </>
           )}
+
+          {/* Actions - Télécharger PDF / Recevoir par email */}
+          <div className="mt-6 pt-4 border-t">
+            <SessionActions
+              sessionId={session.id}
+              sessionName={session.name}
+              sessionDate={session.sessionDate || undefined}
+              variant="compact"
+            />
+          </div>
         </CardContent>
       )}
     </Card>
@@ -207,7 +234,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
 
 // --- HOME CONTENT PRINCIPAL ---
 
-export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek }: HomeContentProps) {
+export function HomeContent({ userId, firstName, userVma, userRole, userStatus, currentWeek, nextWeek }: HomeContentProps) {
   const [showingNextWeek, setShowingNextWeek] = useState(false);
   const [vmaDialogOpen, setVmaDialogOpen] = useState(false);
 
@@ -217,6 +244,24 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
 
   const weekLabel = showingNextWeek ? "Semaine prochaine" : "Cette semaine";
   const weekDateRange = `${format(weekStart, "d MMM", { locale: fr })} - ${format(weekEnd, "d MMM", { locale: fr })}`;
+
+  // Hook onboarding pour les athlètes
+  const { shouldShowOnboarding, startOnboarding } = useAthleteOnboarding({
+    userRole,
+    userStatus,
+    hasVma: !!userVma,
+  });
+
+  // Déclencher l'onboarding automatiquement après le montage du composant
+  useEffect(() => {
+    if (shouldShowOnboarding && userId) {
+      // Petit délai pour s'assurer que tous les éléments sont rendus
+      const timer = setTimeout(() => {
+        startOnboarding();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowOnboarding, userId, startOnboarding]);
 
   return (
     <main className="min-h-screen">
@@ -246,10 +291,11 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
 
             {userId ? (
               <div className="flex justify-center mt-6">
-                  <Button 
-                      variant="outline" 
+                  <Button
+                      variant="outline"
                       className="bg-white/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
                       onClick={() => setVmaDialogOpen(true)}
+                      data-onboarding="vma-button"
                   >
                       <Activity className="h-4 w-4 mr-2 text-primary" />
                       {userVma ? `Ma VMA : ${userVma} km/h` : "Configurer ma VMA"}
@@ -290,7 +336,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
                 )}
               </div>
 
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-2 w-full md:w-auto" data-onboarding="week-navigation">
                 <Button
                   variant="outline"
                   size="sm"
@@ -300,7 +346,7 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" /> Semaine actuelle
                 </Button>
-                
+
                 {hasNextWeekContent && (
                   <Button
                     variant="outline"
@@ -316,12 +362,12 @@ export function HomeContent({ userId, firstName, userVma, currentWeek, nextWeek 
             </div>
 
             {/* Séances */}
-            <section>
+            <section data-onboarding="sessions-section">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-semibold">Séances d'entraînement</h3>
                   <p className="text-sm text-muted-foreground">
-                    {sessions.length > 0 
+                    {sessions.length > 0
                       ? `${sessions.length} séance${sessions.length > 1 ? 's' : ''} planifiée${sessions.length > 1 ? 's' : ''}`
                       : "Aucune séance planifiée"
                     }

@@ -17,22 +17,14 @@ function parseDurationString(input: string): number {
 }
 
 /**
- * Format intelligent : "45sec", "1min", "1min 30"
+ * Format cohérent : toujours "mm:ss" (ex: "00:45", "01:30", "10:00")
  */
 function formatDurationFriendly(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.round(seconds % 60);
 
-  if (mins === 0) {
-    return `${secs}sec`;
-  }
-  
-  if (secs === 0) {
-    return `${mins}min`;
-  }
-
-  // Si on a des minutes et des secondes
-  return `${mins}min ${secs}`;
+  // Toujours retourner le format mm:ss
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**

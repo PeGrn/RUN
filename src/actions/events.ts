@@ -95,6 +95,50 @@ export async function getUserEvents() {
 }
 
 /**
+ * Met à jour un événement existant
+ */
+export async function updateEvent(eventId: string, formData: FormData) {
+  try {
+    // Vérification des permissions
+    const hasPermission = await isCoachOrAdmin();
+    if (!hasPermission) {
+      return { success: false, error: 'Non autorisé' };
+    }
+
+    // Extraction des données
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const type = formData.get('type') as string;
+    const dateStr = formData.get('date') as string;
+
+    if (!title || !dateStr) {
+      return { success: false, error: 'Titre et date requis' };
+    }
+
+    // Mise à jour
+    await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        title,
+        description,
+        type,
+        eventDate: new Date(dateStr),
+      },
+    });
+
+    // Rafraîchir les caches
+    revalidatePath('/planning');
+    revalidatePath('/training');
+    revalidatePath('/sessions');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating event:', error);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+/**
  * Supprime un événement
  */
 export async function deleteEvent(eventId: string) {
@@ -112,7 +156,7 @@ export async function deleteEvent(eventId: string) {
     // Rafraîchir les caches
     revalidatePath('/planning');
     revalidatePath('/sessions');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting event:', error);

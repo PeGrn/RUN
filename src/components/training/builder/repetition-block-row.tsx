@@ -417,7 +417,13 @@ export function RepetitionBlockRow({
             <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-primary/20" />
               <span className="font-medium whitespace-nowrap">
-                Fin de {block.repetitions} x {safeSteps.map(step => step.distance).join(' - ')}
+                Fin de {block.repetitions} x {safeSteps.map(step => {
+                  if (step.type === 'time') {
+                    return step.duration || '0';
+                  } else {
+                    return step.distance > 0 ? `${step.distance}m` : '0';
+                  }
+                }).join(' - ')}
               </span>
               <div className="h-px flex-1 bg-primary/20" />
             </div>

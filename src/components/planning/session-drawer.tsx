@@ -8,16 +8,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Download, ChevronRight, Clock, Route, Mail, Flag, CalendarDays, Beer } from 'lucide-react';
+import { ChevronRight, Clock, Route, Flag, CalendarDays, Beer } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { getSessionPdfUrl } from '@/actions/training-sessions';
-import { sendSessionEmail } from '@/actions/email';
 import { useUser } from '@clerk/nextjs';
-import { toast } from 'sonner';
 import type { TrainingSession, Event } from '@prisma/client';
 import type { TrainingElement } from '@/lib/vma';
 import {
@@ -27,6 +23,7 @@ import {
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 import { VmaDialog } from '@/components/settings/vma-dialog';
+import { SessionActions } from '@/components/training/session-actions';
 
 // --- HELPERS ---
 
@@ -77,8 +74,6 @@ export function SessionDrawer({
   loading = false,
 }: SessionDrawerProps) {
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [sending, setSending] = useState(false);
   const [vmaDialogOpen, setVmaDialogOpen] = useState(false);
   const { user } = useUser();
 
@@ -91,61 +86,6 @@ export function SessionDrawer({
     }
     onOpenChange(isOpen);
   }, [onOpenChange]);
-
-  const handleDownloadPdf = useCallback(async (sessionId: string, sessionName: string) => {
-    setDownloading(true);
-    try {
-      const result = await getSessionPdfUrl(sessionId);
-      if (result.success && result.url) {
-        const link = document.createElement('a');
-        link.href = result.url;
-        link.download = `${sessionName}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Téléchargement démarré');
-      } else {
-        toast.error('Erreur lors du téléchargement');
-      }
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('Erreur lors du téléchargement');
-    } finally {
-      setDownloading(false);
-    }
-  }, []);
-
-  const handleSendEmail = useCallback(async (sessionId: string, sessionName: string) => {
-    const userEmail = user?.emailAddresses[0]?.emailAddress;
-    const userName = user?.firstName || user?.lastName || 'Athlète';
-
-    if (!userEmail) {
-      toast.error('Email non disponible');
-      return;
-    }
-
-    setSending(true);
-    try {
-      const result = await sendSessionEmail({
-        sessionId,
-        sessionName,
-        toEmail: userEmail,
-        userName,
-        sessionDate: selectedDate,
-      });
-
-      if (result.success) {
-        toast.success(`Email envoyé à ${userEmail}`);
-      } else {
-        toast.error('Erreur lors de l\'envoi de l\'email');
-      }
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error('Erreur lors de l\'envoi de l\'email');
-    } finally {
-      setSending(false);
-    }
-  }, [user, selectedDate]);
 
   // Vue : Chargement
   if (loading) {
@@ -366,26 +306,12 @@ export function SessionDrawer({
 
         {/* Footer Actions (Sticky) */}
         <div className="pt-4 mt-auto border-t bg-background sticky bottom-0 z-10 shrink-0">
-            <div className="grid grid-cols-2 gap-3">
-                <Button
-                    variant="default"
-                    onClick={() => handleDownloadPdf(session.id, session.name)}
-                    disabled={downloading}
-                    className="w-full"
-                >
-                    {downloading ? <span className="animate-pulse">...</span> : <Download className="h-4 w-4 mr-2" />}
-                    PDF
-                </Button>
-                <Button
-                    variant="outline"
-                    onClick={() => handleSendEmail(session.id, session.name)}
-                    disabled={sending}
-                    className="w-full"
-                >
-                    {sending ? <span className="animate-pulse">...</span> : <Mail className="h-4 w-4 mr-2" />}
-                    Email
-                </Button>
-            </div>
+            <SessionActions
+              sessionId={session.id}
+              sessionName={session.name}
+              sessionDate={selectedDate}
+              variant="default"
+            />
         </div>
       </SheetContent>
       <VmaDialog
