@@ -12,7 +12,8 @@ import {
   User,
   Clock,
   Mail,
-  ArrowUpDown
+  ArrowUpDown,
+  Activity
 } from 'lucide-react';
 import { approveUser, revokeUser, updateUserRole } from '@/actions/users';
 import type { UserWithMetadata } from '@/actions/users';
@@ -210,12 +211,18 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
           </div>
         </div>
 
-        {/* Badges : Rôle */}
+        {/* Badges : Rôle et VMA */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={getRoleBadgeVariant(user.role)} className="gap-1 text-xs">
             {getRoleIcon(user.role)}
             <span className="capitalize">{user.role}</span>
           </Badge>
+          {user.vma && (
+            <Badge variant="outline" className="gap-1 text-xs bg-primary/5 border-primary/20">
+              <Activity className="h-3 w-3" />
+              VMA: {user.vma.toFixed(1)} km/h
+            </Badge>
+          )}
         </div>
 
         {/* Actions : Sélecteur de rôle + Bouton */}

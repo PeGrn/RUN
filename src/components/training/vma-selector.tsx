@@ -32,13 +32,13 @@ export function VMASelector({
     <Card className="overflow-hidden">
       <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-          <span className="truncate">Votre VMA</span>
+          <span className="truncate">Simulation VMA</span>
           <Badge variant="outline" className="text-base sm:text-lg font-bold px-3 sm:px-4 py-0.5 sm:py-1 whitespace-nowrap ml-2">
             {localValue} km/h
           </Badge>
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm mt-1.5">
-          Sélectionnez votre Vitesse Maximale Aérobie
+          Simulez Distance et Durée en fonction d&apos;une VMA
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">

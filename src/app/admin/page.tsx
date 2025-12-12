@@ -1,6 +1,8 @@
 import { getAllUsers } from '@/actions/users';
 import { UsersManagement } from '@/components/admin/users-management';
-import { Shield, Users } from 'lucide-react';
+import { VmaStats } from '@/components/admin/vma-stats';
+import { Shield, Users, Activity } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,10 +35,10 @@ export default async function AdminPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-2 sm:mb-3 md:mb-4">
-              Gestion des Utilisateurs
+              Tableau de bord Admin
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl">
-              Approuvez les demandes d'accès et gérez les rôles des utilisateurs
+              Statistiques de l&apos;équipe et gestion des utilisateurs
             </p>
           </div>
         </div>
@@ -45,25 +47,46 @@ export default async function AdminPage() {
       {/* Main Content */}
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>{result.users?.length || 0} utilisateur(s) total</span>
-            </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-orange-600">
-              <span className="font-medium">
-                {result.users?.filter(u => u.status === 'pending').length || 0} en attente
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
-              <span className="font-medium">
-                {result.users?.filter(u => u.status === 'approved').length || 0} approuvés
-              </span>
-            </div>
-          </div>
+          <Tabs defaultValue="stats" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="stats" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Statistiques
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Gestion des utilisateurs
+              </TabsTrigger>
+            </TabsList>
 
-          <UsersManagement users={result.users || []} />
+            {/* Onglet Statistiques */}
+            <TabsContent value="stats" className="space-y-6">
+              <VmaStats users={result.users || []} />
+            </TabsContent>
+
+            {/* Onglet Gestion des utilisateurs */}
+            <TabsContent value="users" className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>{result.users?.length || 0} utilisateur(s) total</span>
+                </div>
+                <div className="h-4 w-px bg-border hidden sm:block" />
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-orange-600">
+                  <span className="font-medium">
+                    {result.users?.filter(u => u.status === 'pending').length || 0} en attente
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+                  <span className="font-medium">
+                    {result.users?.filter(u => u.status === 'approved').length || 0} approuvés
+                  </span>
+                </div>
+              </div>
+
+              <UsersManagement users={result.users || []} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>

@@ -15,6 +15,7 @@ export interface UserWithMetadata {
   imageUrl: string;
   role: UserRole;
   status: UserStatus;
+  vma: number | null;
   createdAt: number;
 }
 
@@ -36,7 +37,7 @@ export async function getAllUsers() {
     });
 
     const usersWithMetadata: UserWithMetadata[] = users.map((user) => {
-      const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
+      const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus; vma: number }>;
       const adminEmail = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
       const isAdminUser = user.emailAddresses[0]?.emailAddress === adminEmail;
 
@@ -48,6 +49,7 @@ export async function getAllUsers() {
         imageUrl: user.imageUrl,
         role: isAdminUser ? 'admin' : (metadata.role || 'athlete'),
         status: isAdminUser ? 'approved' : (metadata.status || 'pending'),
+        vma: metadata.vma || null,
         createdAt: user.createdAt,
       };
     });
@@ -78,7 +80,7 @@ export async function getApprovedUsers() {
 
     const approvedUsers = users
       .map((user) => {
-        const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus }>;
+        const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus; vma: number }>;
         const adminEmail = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
         const isAdminUser = user.emailAddresses[0]?.emailAddress === adminEmail;
 
@@ -90,6 +92,7 @@ export async function getApprovedUsers() {
           imageUrl: user.imageUrl,
           role: isAdminUser ? 'admin' : (metadata.role || 'athlete'),
           status: isAdminUser ? 'approved' : (metadata.status || 'pending'),
+          vma: metadata.vma || null,
           createdAt: user.createdAt,
         };
       })
