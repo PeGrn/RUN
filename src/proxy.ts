@@ -28,12 +28,12 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
 
-  // Si la route est publique, laisser passer
-  if (isPublicRoute(req)) {
+  // Si la route est publique ET que l'utilisateur n'est pas connecté, laisser passer
+  if (isPublicRoute(req) && !userId) {
     return NextResponse.next();
   }
 
-  // Si l'utilisateur n'est pas connecté, rediriger vers sign-in
+  // Si l'utilisateur n'est pas connecté sur une route non publique, rediriger vers sign-in
   if (!userId) {
     const signInUrl = new URL('/sign-in', req.url);
     signInUrl.searchParams.set('redirect_url', req.url);
@@ -62,17 +62,17 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL('/planning', req.url));
   }
 
-  // Si l'utilisateur n'est pas approuvé et essaie d'accéder à une route protégée
-  if (status === 'pending' && requiresApproval(req)) {
-    // Sauf s'il est déjà sur la page d'attente
+  // Si l'utilisateur n'est pas approuvé
+  if (status === 'pending') {
+    // Sauf s'il est déjà sur la page d'attente, rediriger vers /waiting
     if (!req.nextUrl.pathname.startsWith('/waiting')) {
       return NextResponse.redirect(new URL('/waiting', req.url));
     }
   }
 
-  // Si l'utilisateur est approuvé et essaie d'accéder à /waiting, rediriger vers /planning
+  // Si l'utilisateur est approuvé et essaie d'accéder à /waiting, rediriger vers la page d'accueil
   if (status === 'approved' && req.nextUrl.pathname.startsWith('/waiting')) {
-    return NextResponse.redirect(new URL('/planning', req.url));
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   return NextResponse.next();

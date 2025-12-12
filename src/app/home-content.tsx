@@ -493,7 +493,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Consultez et téléchargez vos séances d'entraînement planifiées
+                    Consultez et téléchargez vos séances d&apos;entraînement planifiées
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -507,7 +507,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Créez vos propres programmes d'entraînement personnalisés
+                    Créez vos propres programmes d&apos;entraînement personnalisés
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -533,7 +533,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                   Prêt à commencer ?
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Rejoignez l'équipe ESL et accédez à tous les outils d'entraînement
+                  Rejoignez l&apos;équipe ESL et accédez à tous les outils d&apos;entraînement
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
