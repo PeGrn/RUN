@@ -15,7 +15,7 @@ export default async function AdminPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-destructive mb-4">Accès refusé</h1>
           <p className="text-muted-foreground">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+            Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
           </p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default async function AdminPage() {
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Gestion des utilisateurs
+                Utilisateurs
               </TabsTrigger>
             </TabsList>
 
