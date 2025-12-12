@@ -239,7 +239,7 @@ export function VmaStats({ users }: VmaStatsProps) {
             </CardHeader>
             <CardContent>
               {displayedAthletes.length > 0 ? (
-                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                <div className="space-y-2 md:max-h-[400px] md:overflow-y-auto md:pr-2">
                   {displayedAthletes.map((user, index) => (
                     <div
                       key={user.id}
