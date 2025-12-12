@@ -458,7 +458,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-base">Construisez votre séance personnalisée</CardDescription>
+                      <CardDescription className="text-base">Construisez une séance personnalisée</CardDescription>
                     </CardContent>
                   </Link>
                 </Card>
