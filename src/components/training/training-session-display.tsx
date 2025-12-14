@@ -1,9 +1,10 @@
 'use client';
 
-import { Repeat, Copy } from 'lucide-react';
+import { Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TrainingElement } from '@/lib/vma';
 import { useState } from 'react';
+import { StravaIcon } from '@/components/icons/StravaIcon';
 
 // --- UTILITAIRES DE FORMATAGE ---
 
@@ -82,37 +83,57 @@ export function getIntensityLabel(vmaPercentage: number): string {
 export function generateSessionSummary(elements: TrainingElement[], userVma: number | null): string {
   if (!elements || elements.length === 0) return "Séance d'entraînement";
 
+  // Séance simple : 1 bloc, 1 step, pas de répétitions
+  const isSimpleSession = elements.length === 1 &&
+                          elements[0].steps.length === 1 &&
+                          (elements[0].repetitions || 1) === 1;
+
+  if (isSimpleSession) {
+    const step = elements[0].steps[0];
+
+    // Séance simple basée sur le temps
+    if (step.type === 'time') {
+      const durationSec = parseDuration(step.duration);
+      const timeStr = formatDurationFriendly(durationSec);
+      const intensityLabel = getIntensityLabel(step.vmaPercentage);
+      return `${timeStr} ${intensityLabel}`;
+    }
+
+    // Séance simple basée sur la distance
+    const distanceStr = formatDistance(step.distance);
+    const intensityLabel = getIntensityLabel(step.vmaPercentage);
+    return `${distanceStr} ${intensityLabel}`;
+  }
+
+  // Séances complexes (intervalles)
   const blockSummaries: string[] = [];
 
   elements.forEach((block) => {
     const repetitions = block.repetitions || 1;
+    const stepSummaries: string[] = [];
 
-    // Récupérer les distances de chaque step du bloc
-    const distances = block.steps.map((step) => {
+    block.steps.forEach((step) => {
       if (step.type === 'time') {
-        // Calculer la distance estimée pour les steps en temps
-        const speed = userVma ? userVma * (step.vmaPercentage / 100) : 0;
-        if (speed > 0) {
-          const seconds = parseDuration(step.duration);
-          const distanceMeters = (seconds * speed * 1000) / 3600;
-          return Math.round(distanceMeters);
-        }
-        return 0;
+        // Pour les intervalles en temps, afficher le temps
+        const durationSec = parseDuration(step.duration);
+        const timeStr = formatTime(durationSec); // Format mm:ss pour les intervalles
+        stepSummaries.push(timeStr);
       } else {
-        return step.distance;
+        // Pour les distances, afficher en mètres
+        stepSummaries.push(`${step.distance}`);
       }
-    }).filter(d => d > 0);
+    });
 
-    if (distances.length === 0) return;
+    if (stepSummaries.length === 0) return;
 
-    // Formatter les distances (en mètres)
-    const distanceStr = distances.join('-');
+    // Formatter le bloc
+    const blockStr = stepSummaries.join('-');
 
     // Ajouter les répétitions si > 1
     if (repetitions > 1) {
-      blockSummaries.push(`${repetitions}x(${distanceStr})`);
+      blockSummaries.push(`${repetitions}x(${blockStr})`);
     } else {
-      blockSummaries.push(distanceStr);
+      blockSummaries.push(blockStr);
     }
   });
 
@@ -146,14 +167,14 @@ export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Icône de copie discrète */}
+      {/* Icône Strava */}
       <div className="flex justify-end">
         <button
           onClick={handleCopySummary}
           className="opacity-30 hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-100"
           title="Copier le résumé pour Strava"
         >
-          <Copy className={cn("h-4 w-4", copied ? "text-green-600" : "text-slate-600")} />
+          <StravaIcon className={cn("h-4 w-4", copied ? "text-green-600" : "text-orange-600")} />
         </button>
       </div>
       {elements.map((block, blockIndex) => {
