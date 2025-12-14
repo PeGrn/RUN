@@ -155,7 +155,7 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
         toast.dismiss();
         toast.error('Erreur lors du téléchargement');
       }
-    } catch (error) {
+    } catch {
       toast.dismiss();
       toast.error('Erreur lors du téléchargement');
     }
@@ -198,14 +198,14 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
         : await deleteEvent(itemToDelete.id);
 
       if (result.success) {
-        setItems(prev => prev.filter(i => 
+        setItems(prev => prev.filter(i =>
           !(i.type === itemToDelete.type && (i.type === 'session' ? i.data.id : i.data.id) === itemToDelete.id)
         ));
         toast.success('Élément supprimé');
       } else {
         toast.error('Erreur lors de la suppression');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     } finally {
       setDeleteDialogOpen(false);

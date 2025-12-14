@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,11 @@ export function VMASelector({
   step = 0.5
 }: VMASelectorProps) {
   const [localValue, setLocalValue] = useState(value);
+
+  // Synchroniser localValue avec la prop value quand elle change
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
 
   const handleSliderChange = (values: number[]) => {
     const newValue = values[0];

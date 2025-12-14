@@ -142,7 +142,21 @@ export function TrainingBuilder({ vma, elements, onProgramChange }: TrainingBuil
   const totalDistance = elements.reduce((sum, block) => {
     // Safety check for undefined steps
     if (!block.steps || !Array.isArray(block.steps)) return sum;
-    const blockDistance = block.steps.reduce((s, step) => s + step.distance, 0);
+    const blockDistance = block.steps.reduce((s, step) => {
+      if (step.type === 'time') {
+        // Calculate estimated distance for time-based steps
+        const speed = vma * (step.vmaPercentage / 100);
+        const parts = step.duration.split(':');
+        const seconds = parts.length === 2
+          ? parseInt(parts[0]) * 60 + parseInt(parts[1])
+          : parseInt(step.duration) * 60 || 0;
+        const dist = (seconds * speed * 1000) / 3600; // distance in meters
+        return s + dist;
+      } else {
+        // Distance-based step
+        return s + step.distance;
+      }
+    }, 0);
     return sum + (blockDistance * block.repetitions);
   }, 0);
 

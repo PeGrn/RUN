@@ -13,9 +13,10 @@ import {
   Clock,
   Mail,
   ArrowUpDown,
-  Activity
+  Activity,
+  Trash2
 } from 'lucide-react';
-import { approveUser, revokeUser, updateUserRole } from '@/actions/users';
+import { approveUser, revokeUser, updateUserRole, deleteUser } from '@/actions/users';
 import type { UserWithMetadata } from '@/actions/users';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +28,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface UsersManagementProps {
   users: UserWithMetadata[];
@@ -40,6 +51,8 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithMetadata | null>(null);
 
   const handleApprove = async (userId: string) => {
     setLoadingUserId(userId);
@@ -93,6 +106,32 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
       }
     } catch (error) {
       toast.error('Erreur lors de la modification du rôle');
+    } finally {
+      setLoadingUserId(null);
+    }
+  };
+
+  const handleDeleteClick = (user: UserWithMetadata) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    setLoadingUserId(userToDelete.id);
+    try {
+      const result = await deleteUser(userToDelete.id);
+      if (result.success) {
+        setUsers(users.filter(u => u.id !== userToDelete.id));
+        toast.success('Utilisateur supprimé');
+        setDeleteDialogOpen(false);
+        setUserToDelete(null);
+      } else {
+        toast.error(result.error || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
     } finally {
       setLoadingUserId(null);
     }
@@ -244,29 +283,44 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
             </Select>
           )}
 
-          {/* Bouton d'approbation/révocation - pleine largeur sur mobile */}
-          {user.status === 'pending' ? (
-            <Button
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => handleApprove(user.id)}
-              disabled={loadingUserId === user.id}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Approuver
-            </Button>
-          ) : user.role !== 'admin' ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => handleRevoke(user.id)}
-              disabled={loadingUserId === user.id}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Révoquer
-            </Button>
-          ) : null}
+          {/* Boutons d'action - pleine largeur sur mobile */}
+          <div className="flex gap-2 flex-1 sm:flex-none">
+            {user.status === 'pending' ? (
+              <Button
+                size="sm"
+                className="flex-1 sm:flex-none"
+                onClick={() => handleApprove(user.id)}
+                disabled={loadingUserId === user.id}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Approuver
+              </Button>
+            ) : user.role !== 'admin' ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => handleRevoke(user.id)}
+                disabled={loadingUserId === user.id}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Révoquer
+              </Button>
+            ) : null}
+
+            {/* Bouton de suppression - seulement pour les non-admins */}
+            {user.role !== 'admin' && (
+              <Button
+                size="sm"
+                variant="destructive"
+                className="w-auto"
+                onClick={() => handleDeleteClick(user)}
+                disabled={loadingUserId === user.id}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Card>
@@ -331,6 +385,33 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialogue de confirmation de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer définitivement l&apos;utilisateur{' '}
+              <span className="font-semibold">
+                {userToDelete?.firstName && userToDelete?.lastName
+                  ? `${userToDelete.firstName} ${userToDelete.lastName}`
+                  : userToDelete?.email}
+              </span>
+              ? Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

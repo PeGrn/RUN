@@ -230,6 +230,41 @@ export async function updateUserRole(userId: string, newRole: UserRole) {
 }
 
 /**
+ * Supprime un utilisateur complètement (admin seulement)
+ */
+export async function deleteUser(userId: string) {
+  try {
+    // Vérifier les permissions (admin seulement)
+    const adminCheck = await isAdmin();
+    if (!adminCheck) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    if (!userId || typeof userId !== 'string') {
+      return { success: false, error: 'Invalid user ID' };
+    }
+
+    // Empêcher la suppression de l'admin principal
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const adminEmail = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
+    const isAdminUser = user.emailAddresses[0]?.emailAddress === adminEmail;
+
+    if (isAdminUser) {
+      return { success: false, error: 'Cannot delete admin user' };
+    }
+
+    // Supprimer l'utilisateur de Clerk
+    await client.users.deleteUser(userId);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return { success: false, error: 'Failed to delete user' };
+  }
+}
+
+/**
  * Met à jour la VMA de l'utilisateur
  */
 export async function updateUserVma(vma: number) {
@@ -238,7 +273,7 @@ export async function updateUserVma(vma: number) {
     if (!userId) return { success: false, error: 'Non autorisé' };
 
     const client = await clerkClient();
-    
+
     // 1. Récupérer les métadonnées existantes pour ne pas les perdre
     const user = await client.users.getUser(userId);
     const currentMetadata = user.publicMetadata || {};

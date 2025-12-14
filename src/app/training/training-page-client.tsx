@@ -19,13 +19,27 @@ import { getTrainingSessionById } from '@/actions/training-sessions';
 
 interface TrainingPageClientProps {
   userRole: UserRole;
+  userVma: number | null;
 }
 
-export default function TrainingPageClient({ userRole }: TrainingPageClientProps) {
+export default function TrainingPageClient({ userRole, userVma }: TrainingPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+
   const [vma, setVMA] = useLocalStorage('training-vma', 16);
   const [builderElements, setBuilderElements, isLoaded] = useLocalStorage<TrainingElement[]>('training-elements', []);
+  const [hasInitializedVma, setHasInitializedVma] = useState(false);
+
+  // Synchroniser la VMA avec celle de l'utilisateur au chargement
+  useEffect(() => {
+    if (!hasInitializedVma && isLoaded) {
+      if (userVma) {
+        // Si l'utilisateur a une VMA définie, toujours l'utiliser
+        setVMA(userVma);
+      }
+      setHasInitializedVma(true);
+    }
+  }, [userVma, isLoaded, hasInitializedVma, setVMA]);
 
   // États pour les dialogues
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);

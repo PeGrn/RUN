@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Trash2, Plus, Repeat, ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useState, CSSProperties } from 'react';
+import type { DraggableAttributes } from '@dnd-kit/core';
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 
 interface RepetitionBlockRowProps {
   block: RepetitionBlock;
@@ -16,10 +18,10 @@ interface RepetitionBlockRowProps {
   onChange: (block: RepetitionBlock) => void;
   onDelete: () => void;
   onDuplicate?: () => void;
-  dragHandleProps?: any;
+  dragHandleProps?: DraggableAttributes & SyntheticListenerMap;
   isDragging?: boolean;
-  setNodeRef?: any;
-  style?: any;
+  setNodeRef?: (node: HTMLElement | null) => void;
+  style?: CSSProperties;
 }
 
 export function RepetitionBlockRow({
@@ -38,6 +40,30 @@ export function RepetitionBlockRow({
 
   // Safety check: ensure steps array exists
   const safeSteps = block.steps && Array.isArray(block.steps) ? block.steps : [];
+
+  // Format duration for display in block footer
+  // Format: "mm:ss" or just "xx" for minutes
+  const formatDuration = (duration: string): string => {
+    if (!duration) return '0';
+
+    // Si le format contient ":", c'est mm:ss
+    if (duration.includes(':')) {
+      const parts = duration.split(':');
+      const minutes = parseInt(parts[0]) || 0;
+      const seconds = parseInt(parts[1]) || 0;
+
+      if (minutes === 0) {
+        return `${seconds}sec`;
+      } else if (seconds === 0) {
+        return `${minutes}min`;
+      } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+    } else {
+      // Sinon, c'est juste des minutes
+      return `${duration}min`;
+    }
+  };
 
   const handleDeleteClick = () => {
     if (safeSteps.length > 1) {
@@ -194,7 +220,7 @@ export function RepetitionBlockRow({
           ))}
           {safeSteps.length === 0 && (
             <div className="text-center py-6 text-sm text-muted-foreground">
-              Aucune étape. Cliquez sur "Ajouter une étape" pour commencer.
+              Aucune étape. Cliquez sur &quot;Ajouter une étape&quot; pour commencer.
             </div>
           )}
         </div>
@@ -419,7 +445,7 @@ export function RepetitionBlockRow({
               <span className="font-medium whitespace-nowrap">
                 Fin de {block.repetitions} x {safeSteps.map(step => {
                   if (step.type === 'time') {
-                    return step.duration || '0';
+                    return formatDuration(step.duration || '');
                   } else {
                     return step.distance > 0 ? `${step.distance}m` : '0';
                   }
