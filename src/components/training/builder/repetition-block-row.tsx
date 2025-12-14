@@ -9,8 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Trash2, Plus, Repeat, ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
 import { useState, CSSProperties } from 'react';
-import type { DraggableAttributes } from '@dnd-kit/core';
-import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 
 interface RepetitionBlockRowProps {
   block: RepetitionBlock;
@@ -18,7 +16,7 @@ interface RepetitionBlockRowProps {
   onChange: (block: RepetitionBlock) => void;
   onDelete: () => void;
   onDuplicate?: () => void;
-  dragHandleProps?: DraggableAttributes & SyntheticListenerMap;
+  dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
   setNodeRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
