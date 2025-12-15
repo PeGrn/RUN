@@ -182,7 +182,7 @@ export function HeaderClerk() {
                />
             </div>
             <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-              ESL Team
+              ASUL Team
             </span>
           </Link>
 

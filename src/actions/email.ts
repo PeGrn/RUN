@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Configuration de l'expéditeur avec nom d'affichage
 // Format: "Nom Affiché <email@domaine.com>"
 const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM || 'contact@paul-etienne.fr';
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'ESL Team';
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'ASUL Team';
 const EMAIL_FROM = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
 
 export interface SendSessionEmailInput {
@@ -60,7 +60,7 @@ export async function sendSessionEmail(input: SendSessionEmailInput) {
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
 
           <div style="text-align: center; padding-bottom: 20px;">
-            <h1 style="color: #000; font-size: 24px; font-weight: bold; margin: 0;">ESL Team</h1>
+            <h1 style="color: #000; font-size: 24px; font-weight: bold; margin: 0;">ASUL Team</h1>
           </div>
 
           <div style="background-color: #f9fafb; padding: 32px; border-radius: 12px; border: 1px solid #e5e7eb;">
@@ -143,7 +143,7 @@ export async function sendPdfEmail(
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto;">
            <div style="text-align: center; padding-bottom: 20px;">
-            <h1 style="color: #000; font-size: 24px; font-weight: bold; margin: 0;">ESL Team</h1>
+            <h1 style="color: #000; font-size: 24px; font-weight: bold; margin: 0;">ASUL Team</h1>
           </div>
           
           <div style="background-color: #f9fafb; padding: 32px; border-radius: 12px; border: 1px solid #e5e7eb;">

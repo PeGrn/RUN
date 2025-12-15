@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ESL Team', // Le nom de ton app
-    short_name: 'ESL',
+    name: 'ASUL Team',
+    short_name: 'ASUL',
     description: 'Plan entrainement pour le groupe de Javier',
     start_url: '/',
     display: 'standalone',

@@ -22,7 +22,7 @@ export default function ApprovalEmail({
   return (
     <Html>
       <Head />
-      <Preview>Votre compte a été approuvé - Bienvenue chez ESL Team !</Preview>
+      <Preview>Votre compte a été approuvé - Bienvenue chez ASUL Team !</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Modification du titre */}
@@ -32,9 +32,9 @@ export default function ApprovalEmail({
             Bonjour {userName},
           </Text>
 
-          {/* Modification du texte d'intro avec le nom ESL Team */}
+          {/* Modification du texte d'intro avec le nom ASUL Team */}
           <Text style={text}>
-            Bonne nouvelle ! Votre compte sur <strong>la plateforme ESL Team</strong> a été approuvé par un coach.
+            Bonne nouvelle ! Votre compte sur <strong>la plateforme ASUL Team</strong> a été approuvé par un coach.
           </Text>
 
           <Text style={text}>
@@ -56,7 +56,7 @@ export default function ApprovalEmail({
 
           <Text style={footer}>
             Bon entraînement ! 🏃‍♂️💨<br />
-            L&apos;équipe ESL Team
+            L&apos;équipe ASUL Team
           </Text>
         </Container>
       </Body>

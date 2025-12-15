@@ -126,11 +126,11 @@ export function generateICSFile(event: CalendarEvent): string {
   const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//ESL Team//Running Data//FR',
+    'PRODID:-//ASUL Team//Running Data//FR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${Date.now()}@eslteam.com`,
+    `UID:${Date.now()}@ASULteam.com`,
     `DTSTAMP:${now}`,
     `DTSTART:${startDate}`,
     `DTEND:${endDate}`,

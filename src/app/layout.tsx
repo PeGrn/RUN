@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ESL Team - Plan d'entraînement et vie du club",
-  description: "Création de plans d'entraînement personnalisés et gestion de la vie du club pour la Team ESL.",
+  title: "ASUL Team - Plan d'entraînement et vie du club",
+  description: "Création de plans d'entraînement personnalisés et gestion de la vie du club pour la Team ASUL.",
 };
 
 export default function RootLayout({

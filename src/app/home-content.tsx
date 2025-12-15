@@ -271,7 +271,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
               <Dumbbell className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold text-primary uppercase tracking-wide">
-                ASUL Bron - Équipe ESL
+                ASUL Bron - Équipe Javier
               </span>
             </div>
             
@@ -279,7 +279,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
               {userId ? (
                 <>Bonjour <span className="text-primary">{firstName}</span> 👋</>
               ) : (
-                <>Bienvenue sur <span className="text-primary">ESL Team</span></>
+                <>Bienvenue sur <span className="text-primary">ASUL Team</span></>
               )}
             </h1>
             
@@ -533,7 +533,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                   Prêt à commencer ?
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Rejoignez l&apos;équipe ESL et accédez à tous les outils d&apos;entraînement
+                  Rejoignez l&apos;équipe ASUL et accédez à tous les outils d&apos;entraînement
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
