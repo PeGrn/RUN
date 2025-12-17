@@ -4,6 +4,7 @@ import { HistoryList } from '@/components/history/history-list';
 import { History } from 'lucide-react';
 import { isCoachOrAdmin } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { clerkClient } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,38 @@ export default async function SessionsPage() {
 
   const sessions = sessionsResult.success && sessionsResult.sessions ? sessionsResult.sessions : [];
   const events = eventsResult.success && eventsResult.events ? eventsResult.events : [];
+
+  // Récupérer les IDs des créateurs uniques
+  const creatorIds = new Set<string>();
+  sessions.forEach((s) => s.createdBy && creatorIds.add(s.createdBy));
+  events.forEach((e) => e.createdBy && creatorIds.add(e.createdBy));
+
+  // Récupérer les informations des utilisateurs depuis Clerk
+  const userMap = new Map<string, string>();
+  if (creatorIds.size > 0) {
+    try {
+      const users = await (await clerkClient()).users.getUserList({
+        userId: Array.from(creatorIds),
+      });
+      users.data.forEach((user) => {
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Utilisateur inconnu';
+        userMap.set(user.id, fullName);
+      });
+    } catch (error) {
+      console.error('Error fetching users from Clerk:', error);
+    }
+  }
+
+  // Enrichir les données avec les noms des créateurs
+  const enrichedSessions = sessions.map((s) => ({
+    ...s,
+    createdByName: s.createdBy ? userMap.get(s.createdBy) : undefined,
+  }));
+
+  const enrichedEvents = events.map((e) => ({
+    ...e,
+    createdByName: e.createdBy ? userMap.get(e.createdBy) : undefined,
+  }));
 
   return (
     <>
@@ -47,9 +80,9 @@ export default async function SessionsPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 sm:py-8">
-        <HistoryList 
-            initialSessions={sessions} 
-            initialEvents={events} 
+        <HistoryList
+            initialSessions={enrichedSessions}
+            initialEvents={enrichedEvents}
         />
       </div>
     </>

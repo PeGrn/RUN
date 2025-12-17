@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { uploadToS3, getS3Object, getSignedDownloadUrl } from '@/lib/s3';
 import { generatePDFBuffer } from '@/lib/pdf-export';
 import type { TrainingElement } from '@/lib/vma';
+import { auth } from '@clerk/nextjs/server';
 
 // On garde l'interface pour le typage interne si besoin
 export interface CreateSessionInput {
@@ -20,6 +21,9 @@ export interface CreateSessionInput {
  */
 export async function createTrainingSession(formData: FormData) {
   try {
+    // Récupérer l'ID de l'utilisateur connecté
+    const { userId } = await auth();
+
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const vma = parseFloat(formData.get('vma') as string);
@@ -46,6 +50,7 @@ export async function createTrainingSession(formData: FormData) {
         totalTime,
         steps,
         sessionDate,
+        createdBy: userId || undefined,
         // pdfUrl et pdfKey restent null (génération à la demande)
       },
     });

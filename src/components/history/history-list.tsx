@@ -41,13 +41,16 @@ import { DateRange } from 'react-day-picker'; // Import nécessaire pour le type
 import type { TrainingSession, Event } from '@prisma/client';
 import { EditEventDialog } from '@/components/events/edit-event-dialog';
 
-type HistoryItem = 
-  | { type: 'session'; data: TrainingSession; date: Date }
-  | { type: 'event'; data: Event; date: Date };
+type EnrichedSession = TrainingSession & { createdByName?: string };
+type EnrichedEvent = Event & { createdByName?: string };
+
+type HistoryItem =
+  | { type: 'session'; data: EnrichedSession; date: Date }
+  | { type: 'event'; data: EnrichedEvent; date: Date };
 
 interface HistoryListProps {
-  initialSessions: TrainingSession[];
-  initialEvents: Event[];
+  initialSessions: EnrichedSession[];
+  initialEvents: EnrichedEvent[];
 }
 
 export function HistoryList({ initialSessions, initialEvents }: HistoryListProps) {
@@ -388,10 +391,10 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <CalendarIcon className="h-3 w-3" /> <span>Créée le</span>
+                          <CalendarIcon className="h-3 w-3" /> <span>Créé par</span>
                         </div>
                         <div className="font-semibold text-xs">
-                          {format(new Date(session.createdAt), 'd MMM', { locale: fr })}
+                          {session.createdByName || 'Inconnu'}
                         </div>
                       </div>
                     </div>
@@ -450,6 +453,11 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                         <p className="text-sm text-muted-foreground line-clamp-3 bg-white/50 dark:bg-black/20 p-3 rounded-md">
                           {event.description}
                         </p>
+                      )}
+                      {event.createdByName && (
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Créé par <span className="font-semibold">{event.createdByName}</span>
+                        </div>
                       )}
                     </div>
 

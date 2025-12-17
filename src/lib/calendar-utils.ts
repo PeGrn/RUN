@@ -8,10 +8,11 @@ export interface CalendarEvent {
   location?: string;
   startDate: Date;
   endDate?: Date; // Si non fourni, utilise startDate + 1h
+  useLocalTime?: boolean; // Si true, utilise l'heure locale sans conversion UTC
 }
 
 /**
- * Formate une date au format ISO pour les calendriers
+ * Formate une date au format ISO pour les calendriers (UTC)
  * Format: YYYYMMDDTHHMMSSZ
  */
 function formatDateForCalendar(date: Date): string {
@@ -26,13 +27,32 @@ function formatDateForCalendar(date: Date): string {
 }
 
 /**
+ * Formate une date au format ISO pour les calendriers (heure locale, sans timezone)
+ * Format: YYYYMMDDTHHMMSS (sans Z)
+ * Cela indique aux calendriers que c'est une heure locale, pas UTC
+ */
+function formatLocalDateForCalendar(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+/**
  * Génère un lien pour Google Calendar
  */
 export function generateGoogleCalendarUrl(event: CalendarEvent): string {
-  const startDate = formatDateForCalendar(event.startDate);
+  // Utiliser le formatage local si demandé (pas de conversion UTC)
+  const formatter = event.useLocalTime ? formatLocalDateForCalendar : formatDateForCalendar;
+
+  const startDate = formatter(event.startDate);
   const endDate = event.endDate
-    ? formatDateForCalendar(event.endDate)
-    : formatDateForCalendar(new Date(event.startDate.getTime() + 60 * 60 * 1000)); // +1h par défaut
+    ? formatter(event.endDate)
+    : formatter(new Date(event.startDate.getTime() + 60 * 60 * 1000)); // +1h par défaut
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',
@@ -111,10 +131,13 @@ export function generateOffice365CalendarUrl(event: CalendarEvent): string {
  * Génère un fichier .ics pour Apple Calendar, Thunderbird, etc.
  */
 export function generateICSFile(event: CalendarEvent): string {
-  const startDate = formatDateForCalendar(event.startDate);
+  // Utiliser le formatage local si demandé (pas de conversion UTC)
+  const formatter = event.useLocalTime ? formatLocalDateForCalendar : formatDateForCalendar;
+
+  const startDate = formatter(event.startDate);
   const endDate = event.endDate
-    ? formatDateForCalendar(event.endDate)
-    : formatDateForCalendar(new Date(event.startDate.getTime() + 60 * 60 * 1000));
+    ? formatter(event.endDate)
+    : formatter(new Date(event.startDate.getTime() + 60 * 60 * 1000));
 
   const now = formatDateForCalendar(new Date());
 

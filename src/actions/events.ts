@@ -16,11 +16,15 @@ export async function createEvent(formData: FormData) {
       return { success: false, error: 'Non autorisé' };
     }
 
+    // Récupérer l'ID de l'utilisateur connecté
+    const { userId } = await auth();
+
     // 2. Extraction des données
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const type = formData.get('type') as string;
     const dateStr = formData.get('date') as string;
+    const startTime = formData.get('startTime') as string | null;
 
     if (!title || !dateStr) {
       return { success: false, error: 'Titre et date requis' };
@@ -33,6 +37,8 @@ export async function createEvent(formData: FormData) {
         description,
         type,
         eventDate: new Date(dateStr),
+        startTime: startTime || undefined,
+        createdBy: userId || undefined,
       },
     });
 
@@ -110,6 +116,7 @@ export async function updateEvent(eventId: string, formData: FormData) {
     const description = formData.get('description') as string;
     const type = formData.get('type') as string;
     const dateStr = formData.get('date') as string;
+    const startTime = formData.get('startTime') as string | null;
 
     if (!title || !dateStr) {
       return { success: false, error: 'Titre et date requis' };
@@ -123,6 +130,7 @@ export async function updateEvent(eventId: string, formData: FormData) {
         description,
         type,
         eventDate: new Date(dateStr),
+        startTime: startTime || undefined,
       },
     });
 

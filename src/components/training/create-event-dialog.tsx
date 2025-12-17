@@ -30,6 +30,7 @@ interface CreateEventDialogProps {
 export function CreateEventDialog({ open, onOpenChange }: CreateEventDialogProps) {
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState<string>('');
   const [type, setType] = useState('race');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,12 +42,17 @@ export function CreateEventDialog({ open, onOpenChange }: CreateEventDialogProps
 
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    
+
     // On ajoute la date et le type manuellement car ils sont gérés par des composants contrôlés
     // Astuce: créer une date à midi pour éviter les soucis de timezone UTC
     const normalizedDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0));
     formData.append('date', normalizedDate.toISOString());
     formData.append('type', type);
+
+    // Ajouter l'heure si elle est définie
+    if (time) {
+      formData.append('startTime', time);
+    }
 
     const result = await createEvent(formData);
 
@@ -55,6 +61,7 @@ export function CreateEventDialog({ open, onOpenChange }: CreateEventDialogProps
       onOpenChange(false);
       // Reset form simple
       setDate(undefined);
+      setTime('');
     } else {
       toast.error(result.error || "Erreur lors de la création");
     }
@@ -114,6 +121,17 @@ export function CreateEventDialog({ open, onOpenChange }: CreateEventDialogProps
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time">Heure de début (optionnel)</Label>
+            <Input
+              id="time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              placeholder="Ex: 14:30"
+            />
           </div>
 
           <div className="space-y-2">

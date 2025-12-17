@@ -39,6 +39,17 @@ import { SessionActions } from '@/components/training/session-actions';
 // --- HELPERS ---
 
 /**
+ * Combine une date et une heure (format "HH:mm") pour créer un Date object
+ * Utilise les composants locaux (pas UTC) pour éviter les problèmes de fuseau horaire
+ */
+function combineDateAndTime(date: Date, time: string): Date {
+  const [hours, minutes] = time.split(':').map(Number);
+  const combined = new Date(date);
+  combined.setHours(hours, minutes, 0, 0);
+  return combined;
+}
+
+/**
  * Vérifie quels KPIs dépendent de la VMA pour cette session
  * - Si la session a des étapes basées sur le temps → la distance dépend de la VMA
  * - Si la session a des étapes basées sur la distance → la durée dépend de la VMA
@@ -472,6 +483,9 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                             <CardDescription className="flex items-center gap-2 mt-1">
                               <CalendarDays className="h-3 w-3" />
                               {format(new Date(event.eventDate), "EEEE d MMMM", { locale: fr })}
+                              {event.startTime && (
+                                <span className="font-medium text-foreground">à {event.startTime}</span>
+                              )}
                             </CardDescription>
                           </div>
                           <Badge variant="secondary" className="shrink-0">
@@ -487,7 +501,10 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                           event={{
                             title: event.title,
                             description: event.description || undefined,
-                            startDate: new Date(event.eventDate),
+                            startDate: event.startTime
+                              ? combineDateAndTime(new Date(event.eventDate), event.startTime)
+                              : new Date(event.eventDate),
+                            useLocalTime: !!event.startTime,
                           }}
                           variant="outline"
                           size="sm"

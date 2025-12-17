@@ -33,6 +33,7 @@ interface EditEventDialogProps {
 export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEventDialogProps) {
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState<string>('');
   const [type, setType] = useState('race');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -44,6 +45,7 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
       setDescription(event.description || '');
       setType(event.type);
       setDate(new Date(event.eventDate));
+      setTime(event.startTime || '');
     }
   }, [event]);
 
@@ -64,6 +66,11 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
     // Créer une date à midi pour éviter les soucis de timezone UTC
     const normalizedDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0));
     formData.append('date', normalizedDate.toISOString());
+
+    // Ajouter l'heure si elle est définie
+    if (time) {
+      formData.append('startTime', time);
+    }
 
     const result = await updateEvent(event.id, formData);
 
@@ -141,6 +148,17 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time">Heure de début (optionnel)</Label>
+            <Input
+              id="time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              placeholder="Ex: 14:30"
+            />
           </div>
 
           <div className="space-y-2">
