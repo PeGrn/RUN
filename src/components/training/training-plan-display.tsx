@@ -14,7 +14,7 @@ export function TrainingPlanDisplay({ program }: TrainingPlanDisplayProps) {
       {/* Summary Card */}
       <Card className="bg-gradient-to-br from-primary/5 via-primary/3 to-background">
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-xl sm:text-2xl">Résumé de l'entraînement</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Résumé de l&apos;entraînement</CardTitle>
           <CardDescription className="text-xs sm:text-sm mt-1.5">
             Programme personnalisé pour une VMA de {program.vma} km/h
           </CardDescription>

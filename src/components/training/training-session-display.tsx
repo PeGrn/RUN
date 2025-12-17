@@ -295,10 +295,6 @@ export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
                   </div>
                 )}
               </div>
-
-              {isRepetition && (
-                 <div className="h-full w-4 absolute right-4 top-0 border-r-2 border-orange-200 rounded-r-lg -z-10" />
-              )}
             </div>
           </div>
         );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, forwardRef, useRef } from 'react';
 import Link from "next/link";
 import {
   CalendarDays,
@@ -84,8 +84,9 @@ interface HomeContentProps {
 
 // --- SESSION CARD ---
 
-function SessionCard({ session, userVma }: { session: TrainingSession, userVma: number | null }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+const SessionCard = forwardRef<HTMLDivElement, { session: TrainingSession, userVma: number | null, defaultExpanded?: boolean }>(
+  function SessionCard({ session, userVma, defaultExpanded = false }, ref) {
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const sessionSteps = (session.steps as unknown as TrainingElement[]) || [];
 
   const program = useMemo(() => {
@@ -100,7 +101,7 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
   const shouldBlurDuration = !userVma && durationDependsOnVma;
 
   return (
-    <Card className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
+    <Card ref={ref} className="hover:shadow-md transition-shadow overflow-hidden bg-slate-50/50">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full text-left"
@@ -228,7 +229,9 @@ function SessionCard({ session, userVma }: { session: TrainingSession, userVma: 
       )}
     </Card>
   );
-}
+});
+
+SessionCard.displayName = 'SessionCard';
 
 // --- HOME CONTENT PRINCIPAL ---
 
@@ -239,6 +242,23 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
   const displayedWeek = showingNextWeek ? nextWeek : currentWeek;
   const { sessions, events, weekStart, weekEnd } = displayedWeek;
   const hasNextWeekContent = nextWeek.sessions.length > 0 || nextWeek.events.length > 0;
+
+  // Refs pour les cartes de session et flag pour éviter de scroller plusieurs fois
+  const sessionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const todaySessionScrolled = useRef(false);
+
+  // Trouver l'index de la session du jour
+  const todaySessionIndex = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for date comparison
+
+    return sessions.findIndex(session => {
+      if (!session.sessionDate) return false;
+      const sessionDate = new Date(session.sessionDate);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate.getTime() === today.getTime();
+    });
+  }, [sessions]);
 
   const weekLabel = showingNextWeek ? "Semaine prochaine" : "Cette semaine";
   const weekDateRange = `${format(weekStart, "d MMM", { locale: fr })} - ${format(weekEnd, "d MMM", { locale: fr })}`;
@@ -260,6 +280,34 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
       return () => clearTimeout(timer);
     }
   }, [shouldShowOnboarding, userId, startOnboarding]);
+
+  // Scroller vers la session du jour après le montage
+  useEffect(() => {
+    if (!showingNextWeek && todaySessionIndex !== -1 && !todaySessionScrolled.current && sessions.length > 0) {
+      const todaySessionId = sessions[todaySessionIndex]?.id;
+      const element = sessionRefs.current[todaySessionId];
+
+      if (element) {
+        // Petit délai pour s'assurer que le rendu est terminé et que la carte est ouverte
+        const timer = setTimeout(() => {
+          const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+          const offsetPosition = elementPosition - 100; // 100px offset pour le header et un peu d'espace
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+          todaySessionScrolled.current = true;
+        }, 600);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [sessions, todaySessionIndex, showingNextWeek]);
+
+  // Réinitialiser le flag de scroll quand on change de semaine
+  useEffect(() => {
+    todaySessionScrolled.current = false;
+  }, [showingNextWeek]);
 
   return (
     <main className="min-h-screen">
@@ -378,8 +426,16 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
 
               {sessions.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {sessions.map((session) => (
-                    <SessionCard key={session.id} session={session} userVma={userVma} />
+                  {sessions.map((session, index) => (
+                    <SessionCard
+                      key={session.id}
+                      ref={(el) => {
+                        if (el) sessionRefs.current[session.id] = el;
+                      }}
+                      session={session}
+                      userVma={userVma}
+                      defaultExpanded={index === todaySessionIndex}
+                    />
                   ))}
                 </div>
               ) : (
