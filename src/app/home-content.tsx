@@ -30,7 +30,8 @@ import { VmaDialog } from '@/components/settings/vma-dialog';
 import {
   ProgramSteps,
   formatTime,
-  formatDistance
+  formatDistance,
+  generateSessionSummary
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 import { useAthleteOnboarding } from '@/hooks/use-athlete-onboarding';
@@ -128,6 +129,9 @@ const SessionCard = forwardRef<HTMLDivElement, { session: TrainingSession, userV
                   }`}
                 />
               </CardTitle>
+              <div className="mt-1 text-sm font-medium text-slate-600">
+                {generateSessionSummary(sessionSteps, userVma)}
+              </div>
               <CardDescription className="flex items-center gap-2">
                 <CalendarDays className="h-3 w-3" />
                 {session.sessionDate && format(new Date(session.sessionDate), "EEEE d MMMM", { locale: fr })}

@@ -19,7 +19,8 @@ import type { TrainingElement } from '@/lib/vma';
 import {
   ProgramSteps,
   formatTime,
-  formatDistance
+  formatDistance,
+  generateSessionSummary
 } from '@/components/training/training-session-display';
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 import { VmaDialog } from '@/components/settings/vma-dialog';
@@ -271,6 +272,9 @@ export function SessionDrawer({
                     <SheetTitle className="text-2xl font-bold text-primary">
                         {session.name}
                     </SheetTitle>
+                    <div className="mt-2 text-sm font-medium text-slate-600">
+                        {generateSessionSummary(sessionSteps, userVma)}
+                    </div>
                     <SheetDescription className="mt-1">
                         {selectedDate && format(selectedDate, 'EEEE d MMMM', { locale: fr })}
                     </SheetDescription>
