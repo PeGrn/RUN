@@ -20,8 +20,14 @@ function parseDurationString(input: string): number {
  * Format cohérent : toujours "mm:ss" (ex: "00:45", "01:30", "10:00")
  */
 function formatDurationFriendly(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.round(seconds % 60);
+  let mins = Math.floor(seconds / 60);
+  let secs = Math.round(seconds % 60);
+
+  // Handle case where rounding gives 60 seconds
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
 
   // Toujours retourner le format mm:ss
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -33,8 +39,15 @@ function formatDurationFriendly(seconds: number): string {
 function formatPace(speedKmh: number): string {
   if (!speedKmh || speedKmh <= 0) return "-";
   const secondsPerKm = 3600 / speedKmh;
-  const mins = Math.floor(secondsPerKm / 60);
-  const secs = Math.round(secondsPerKm % 60);
+  let mins = Math.floor(secondsPerKm / 60);
+  let secs = Math.round(secondsPerKm % 60);
+
+  // Handle case where rounding gives 60 seconds
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
+
   return `${mins}'${secs.toString().padStart(2, '0')}/km`;
 }
 

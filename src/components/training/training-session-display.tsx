@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { TrainingElement } from '@/lib/vma';
 import { useState } from 'react';
 import { StravaIcon } from '@/components/icons/StravaIcon';
+import { ExportGarminButton } from './export-garmin-button';
 
 // --- UTILITAIRES DE FORMATAGE ---
 
@@ -17,8 +18,14 @@ export function formatTime(seconds: number): string {
 export function formatDurationFriendly(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const remainingSeconds = seconds % 3600;
-  const mins = Math.floor(remainingSeconds / 60);
-  const secs = Math.round(remainingSeconds % 60);
+  let mins = Math.floor(remainingSeconds / 60);
+  let secs = Math.round(remainingSeconds % 60);
+
+  // Handle case where rounding gives 60 seconds
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
 
   if (hours > 0) {
     return mins > 0 ? `${hours}h ${mins}` : `${hours}h`;
@@ -52,8 +59,15 @@ export function formatDistance(meters: number): string {
 export function formatPace(speedKmh: number): string {
   if (!speedKmh || speedKmh <= 0) return "";
   const secondsPerKm = 3600 / speedKmh;
-  const mins = Math.floor(secondsPerKm / 60);
-  const secs = Math.round(secondsPerKm % 60);
+  let mins = Math.floor(secondsPerKm / 60);
+  let secs = Math.round(secondsPerKm % 60);
+
+  // Handle case where rounding gives 60 seconds
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
+
   return `${mins}'${secs.toString().padStart(2, '0')}/km`;
 }
 
@@ -145,9 +159,11 @@ export function generateSessionSummary(elements: TrainingElement[], userVma: num
 interface ProgramStepsProps {
   elements: TrainingElement[];
   userVma: number | null;
+  sessionName?: string;
+  sessionDate?: Date | null;
 }
 
-export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
+export function ProgramSteps({ elements, userVma, sessionName, sessionDate }: ProgramStepsProps) {
   const [copied, setCopied] = useState(false);
 
   if (!elements || elements.length === 0) {
@@ -165,10 +181,22 @@ export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
     }
   };
 
+  // Générer le nom de workout pour Garmin: "Titre jj/mm"
+  const workoutName = (() => {
+    const baseName = sessionName || generateSessionSummary(elements, userVma);
+    if (sessionDate) {
+      const date = new Date(sessionDate);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${baseName} ${day}/${month}`;
+    }
+    return baseName;
+  })();
+
   return (
     <div className="space-y-4">
-      {/* Icône Strava */}
-      <div className="flex justify-end">
+      {/* Boutons Strava et Garmin */}
+      <div className="flex justify-end items-center gap-2">
         <button
           onClick={handleCopySummary}
           className="opacity-30 hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-100"
@@ -176,6 +204,15 @@ export function ProgramSteps({ elements, userVma }: ProgramStepsProps) {
         >
           <StravaIcon className={cn("h-4 w-4", copied ? "text-green-600" : "text-orange-600")} />
         </button>
+
+        <ExportGarminButton
+          elements={elements}
+          vma={userVma || 16}
+          workoutName={workoutName}
+          variant="ghost"
+          className="opacity-30 hover:opacity-100 transition-opacity"
+          mode="upload"
+        />
       </div>
       {elements.map((block, blockIndex) => {
         const isRepetition = block.repetitions > 1;

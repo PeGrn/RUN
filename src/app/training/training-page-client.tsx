@@ -6,6 +6,7 @@ import { TrainingBuilder } from '@/components/training/builder';
 import { SpeedChart } from '@/components/training/charts';
 import { SavePdfDialog } from '@/components/training/save-pdf-dialog';
 import { CreateEventDialog } from '@/components/training/create-event-dialog'; // Import ajouté
+import { ExportGarminButton } from '@/components/training/export-garmin-button';
 import { calculateVMAProgram, TrainingElement, convertBuilderElementsToSteps } from '@/lib/vma';
 import { generatePDF } from '@/lib/pdf-export';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -206,7 +207,17 @@ export default function TrainingPageClient({ userRole, userVma }: TrainingPageCl
                 <Download className="h-4 w-4 mr-2" />
                 Télécharger PDF
               </Button>
-              
+
+              <ExportGarminButton
+                elements={builderElements}
+                vma={vma}
+                workoutName={editingSessionData?.name || 'Séance VMA'}
+                disabled={!program}
+                variant="outline"
+                className="w-full"
+                mode="upload"
+              />
+
               {/* Boutons réservés aux Coachs et Admins */}
               {(userRole === 'coach' || userRole === 'admin') && (
                 <>

@@ -45,3 +45,22 @@ export {
   downloadActivityFIT,
   getRecentActivities,
 } from "./activities";
+
+// Upload
+export {
+  uploadWorkoutToGarmin,
+  uploadWorkoutToGarminBase64,
+} from "./upload";
+
+// Workout
+export {
+  createGarminWorkout,
+  scheduleGarminWorkout,
+} from "./workout";
+
+// User Authentication
+export {
+  connectUserGarmin,
+  disconnectUserGarmin,
+  getUserGarminStatus,
+} from "./user-auth";

@@ -44,3 +44,16 @@ model Event {
   @@index([eventDate])
   @@map("events")
 }
+
+model GarminConnection {
+  id           String   @id @default(uuid())
+  userId       String   @unique // Clerk User ID
+  tokens       String   @db.Text // Encrypted serialized tokens (dumps())
+  displayName  String?  // Nom d'affichage Garmin
+  garminGuid   String?  // GUID Garmin
+  connectedAt  DateTime @default(now())
+  lastSyncedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("garmin_connections")
+}

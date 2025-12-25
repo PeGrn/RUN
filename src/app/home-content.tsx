@@ -189,7 +189,12 @@ const SessionCard = forwardRef<HTMLDivElement, { session: TrainingSession, userV
                     ⚠️ Configurez votre VMA pour voir vos allures personnalisées
                   </div>
                 )}
-                <ProgramSteps elements={sessionSteps} userVma={userVma} />
+                <ProgramSteps
+                  elements={sessionSteps}
+                  userVma={userVma}
+                  sessionName={session.name}
+                  sessionDate={session.sessionDate}
+                />
               </div>
 
               {/* Desktop: Tabs avec Détail + Graphique */}
@@ -212,7 +217,12 @@ const SessionCard = forwardRef<HTMLDivElement, { session: TrainingSession, userV
                         ⚠️ Configurez votre VMA pour voir vos allures personnalisées
                       </div>
                     )}
-                    <ProgramSteps elements={sessionSteps} userVma={userVma} />
+                    <ProgramSteps
+                  elements={sessionSteps}
+                  userVma={userVma}
+                  sessionName={session.name}
+                  sessionDate={session.sessionDate}
+                />
                   </TabsContent>
 
                   <TabsContent value="graph" className="mt-0">

@@ -322,7 +322,12 @@ export function SessionDrawer({
                 </h3>
 
                 {/* INTÉGRATION DE ProgramSteps */}
-                <ProgramSteps elements={sessionSteps} userVma={userVma} />
+                <ProgramSteps
+                  elements={sessionSteps}
+                  userVma={userVma}
+                  sessionName={session.name}
+                  sessionDate={selectedDate}
+                />
 
             </div>
         </div>
