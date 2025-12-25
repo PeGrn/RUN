@@ -239,7 +239,6 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
                 <p className="font-medium">🔒 Sécurité :</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   <li>Vos identifiants sont chiffrés avec AES-256-GCM</li>
-                  <li>Stockage sécurisé dans notre base de données</li>
                   <li>Aucun accès externe possible</li>
                   <li>Vous pouvez vous déconnecter à tout moment</li>
                 </ul>
