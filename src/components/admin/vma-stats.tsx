@@ -117,7 +117,7 @@ export function VmaStats({ users }: VmaStatsProps) {
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {stats.withVma} avec VMA
+              {stats.withVma > 0 ? `${((stats.withVma / stats.total) * 100).toFixed(0)}% équipe` : 'Aucune VMA'}
             </p>
           </CardContent>
         </Card>
@@ -132,9 +132,6 @@ export function VmaStats({ users }: VmaStatsProps) {
               {stats.average > 0 ? stats.average.toFixed(1) : '-'}
               {stats.average > 0 && <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-0.5 sm:ml-1">km/h</span>}
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {stats.withVma > 0 ? `${((stats.withVma / stats.total) * 100).toFixed(0)}% équipe` : 'Aucune VMA'}
-            </p>
           </CardContent>
         </Card>
 
@@ -162,7 +159,7 @@ export function VmaStats({ users }: VmaStatsProps) {
               {stats.max > 0 ? stats.max.toFixed(1) : '-'}
               {stats.max > 0 && <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-0.5 sm:ml-1">km/h</span>}
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Meilleure</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Plus haute</p>
           </CardContent>
         </Card>
       </div>
