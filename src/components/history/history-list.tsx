@@ -394,7 +394,10 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                           <CalendarIcon className="h-3 w-3" /> <span>Créé par</span>
                         </div>
                         <div className="font-semibold text-xs">
-                          {session.createdByName || 'Inconnu'}
+                          {session.createdByName || 'Inconnu'}{' '}
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            le {format(new Date(session.createdAt), 'd/MM', { locale: fr })}
+                          </span>
                         </div>
                       </div>
                     </div>
