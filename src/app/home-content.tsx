@@ -357,7 +357,7 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {userId ? "Voici un aperçu de votre semaine d'entraînement" : "Votre plateforme d'entraînement personnalisée pour atteindre vos objectifs"}
+              {userId ? "Voici ta votre semaine d'entraînement" : "La plateforme d'entraînement personnalisée pour atteindre tes objectifs"}
             </p>
 
             {userId ? (
