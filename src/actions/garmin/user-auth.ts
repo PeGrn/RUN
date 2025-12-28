@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { Client } from "@/lib/garth/http";
+import { UserProfile } from "@/lib/garth/users/profile";
 import { encrypt, decrypt } from "@/lib/encryption";
 
 /**
@@ -64,13 +65,13 @@ export async function connectUserGarmin(email: string, password: string, mfaCode
     let displayName = null;
     let garminGuid = null;
     try {
-      const profile = await client.connectapi("/userprofile-service/userprofile");
-      if (profile && !Array.isArray(profile)) {
-        displayName = profile.fullName || profile.displayName;
-        garminGuid = profile.garminGUID;
-      }
+      const profile = await UserProfile.get({ client });
+      displayName = profile.full_name || profile.display_name;
+      garminGuid = profile.garmin_guid;
+      console.log(`✓ Retrieved Garmin profile: ${displayName} (GUID: ${garminGuid})`);
     } catch (error) {
       console.warn("Failed to fetch Garmin profile:", error);
+      // Continue without profile info
     }
 
     // Encrypt the serialized tokens before storing

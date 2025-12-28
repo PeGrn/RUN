@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { connectUserGarmin, disconnectUserGarmin } from '@/actions/garmin';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface ProfilePageClientProps {
   garminStatus: {
@@ -30,6 +31,51 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
+
+  // Fonction pour lancer les confettis
+  const launchConfetti = () => {
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 }
+    };
+
+    function fire(particleRatio: number, opts: confetti.Options) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio),
+        spread: 90,
+        startVelocity: 55,
+      });
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+    });
+
+    fire(0.2, {
+      spread: 60,
+    });
+
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+    });
+  };
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +100,13 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
       }
 
       if (result.success) {
-        toast.success('Connecté à Garmin Connect !', {
-          description: `Bienvenue ${result.displayName || 'utilisateur'}`,
+        // Lancer les confettis
+        launchConfetti();
+
+        // Toast de succès amélioré
+        toast.success('Connexion réussie !', {
+          description: `Compte Garmin de ${result.displayName || 'votre compte'} connecté avec succès. Vous pouvez maintenant exporter vos séances d'entraînement.`,
+          duration: 5000,
         });
 
         // Reset form
@@ -112,7 +163,7 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
         <CardHeader>
           <CardTitle>Connexion Garmin Connect</CardTitle>
           <CardDescription>
-            Connectez votre compte Garmin pour exporter automatiquement vos séances d&apos;entraînement
+            Connectez votre compte Garmin pour exporter en 1 clic vos séances d&apos;entraînement ⚡
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -169,7 +220,7 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
                     Non connecté à Garmin Connect
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Connectez-vous pour exporter automatiquement vos séances
+                    Connectez-vous pour exporter en 1 clic vos séances ⚡
                   </p>
                 </div>
               </div>
@@ -236,10 +287,10 @@ export function ProfilePageClient({ garminStatus }: ProfilePageClientProps) {
 
               {/* Security Notice */}
               <div className="text-xs text-muted-foreground space-y-1 pt-2">
-                <p className="font-medium">🔒 Sécurité :</p>
+                <p className="font-medium">🔒 Sécurité et tokens :</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Vos identifiants sont chiffrés avec AES-256-GCM</li>
-                  <li>Aucun accès externe possible</li>
+                  <li>Vos identifiants ne sont jamais enregistrés</li>
+                  <li>Seuls les tokens OAuth sont stockés (chiffrés AES-256-GCM)</li>
                   <li>Vous pouvez vous déconnecter à tout moment</li>
                 </ul>
               </div>

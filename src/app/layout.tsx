@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from "@/components/ui/sonner";
 import { HeaderWrapper } from "@/components/header-wrapper";
+import { SkipLink } from "@/components/ui/skip-link";
 import RegisterSW from "./RegisterSW";
 import { frFR } from '@clerk/localizations';
 import "./globals.css";
@@ -33,9 +34,10 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <SkipLink />
           <HeaderWrapper />
           <RegisterSW />
-          <main className="pt-16">
+          <main id="main-content" className="pt-16" role="main" tabIndex={-1}>
             {children}
           </main>
           <Toaster />

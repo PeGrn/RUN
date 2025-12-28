@@ -16,6 +16,7 @@ import {
   Activity,
   Trash2
 } from 'lucide-react';
+import Image from 'next/image';
 import { approveUser, revokeUser, updateUserRole, deleteUser } from '@/actions/users';
 import type { UserWithMetadata } from '@/actions/users';
 import { toast } from 'sonner';
@@ -250,7 +251,7 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
           </div>
         </div>
 
-        {/* Badges : Rôle et VMA */}
+        {/* Badges : Rôle, VMA et Garmin */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={getRoleBadgeVariant(user.role)} className="gap-1 text-xs">
             {getRoleIcon(user.role)}
@@ -260,6 +261,18 @@ export function UsersManagement({ users: initialUsers }: UsersManagementProps) {
             <Badge variant="outline" className="gap-1 text-xs bg-primary/5 border-primary/20">
               <Activity className="h-3 w-3" />
               VMA: {user.vma.toFixed(1)} km/h
+            </Badge>
+          )}
+          {user.hasGarminConnection && (
+            <Badge variant="outline" className="gap-1 text-xs bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50" title="Compte Garmin connecté">
+              <Image
+                src="/Garminconnect.svg"
+                alt="Garmin"
+                width={14}
+                height={14}
+                className="opacity-80"
+              />
+              <span className="text-blue-700 dark:text-blue-400">Garmin</span>
             </Badge>
           )}
         </div>

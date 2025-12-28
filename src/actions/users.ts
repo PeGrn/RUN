@@ -6,6 +6,7 @@ import type { UserRole, UserStatus } from '@/lib/auth';
 import { resend, FROM_EMAIL } from '@/lib/resend';
 import ApprovalEmail from '@/emails/approval-email';
 import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
 
 export interface UserWithMetadata {
   id: string;
@@ -17,6 +18,7 @@ export interface UserWithMetadata {
   status: UserStatus;
   vma: number | null;
   createdAt: number;
+  hasGarminConnection: boolean;
 }
 
 /**
@@ -36,6 +38,16 @@ export async function getAllUsers() {
       orderBy: '-created_at',
     });
 
+    // Récupérer toutes les connexions Garmin en une seule requête
+    const garminConnections = await prisma.garminConnection.findMany({
+      select: {
+        userId: true,
+      },
+    });
+
+    // Créer un Set pour une recherche rapide
+    const garminUserIds = new Set(garminConnections.map(conn => conn.userId));
+
     const usersWithMetadata: UserWithMetadata[] = users.map((user) => {
       const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus; vma: number }>;
       const adminEmail = process.env.ADMIN_EMAIL || 'pauletiennegrn@gmail.com';
@@ -51,6 +63,7 @@ export async function getAllUsers() {
         status: isAdminUser ? 'approved' : (metadata.status || 'pending'),
         vma: metadata.vma || null,
         createdAt: user.createdAt,
+        hasGarminConnection: garminUserIds.has(user.id),
       };
     });
 
@@ -78,6 +91,16 @@ export async function getApprovedUsers() {
       orderBy: 'first_name',
     });
 
+    // Récupérer toutes les connexions Garmin en une seule requête
+    const garminConnections = await prisma.garminConnection.findMany({
+      select: {
+        userId: true,
+      },
+    });
+
+    // Créer un Set pour une recherche rapide
+    const garminUserIds = new Set(garminConnections.map(conn => conn.userId));
+
     const approvedUsers = users
       .map((user) => {
         const metadata = (user.publicMetadata || {}) as Partial<{ role: UserRole; status: UserStatus; vma: number }>;
@@ -94,6 +117,7 @@ export async function getApprovedUsers() {
           status: isAdminUser ? 'approved' : (metadata.status || 'pending'),
           vma: metadata.vma || null,
           createdAt: user.createdAt,
+          hasGarminConnection: garminUserIds.has(user.id),
         };
       })
       .filter((user) => user.status === 'approved'); // Filtrer uniquement les approuvés

@@ -166,16 +166,16 @@ export function HeaderClerk() {
   };
 
   return (
-    <header className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
+    <header role="banner" className="fixed top-0 z-[100] w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          
+
           {/* Logo */}
           <Link href="/" className="group flex items-center gap-3 flex-shrink-0 transition-opacity hover:opacity-90 z-[101]">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 transition-transform duration-300 group-hover:scale-105">
-               <Image 
-                 src="/LOGO_ASUL_BRON.png" 
-                 alt="Logo ASUL Bron" 
+               <Image
+                 src="/LOGO_ASUL_BRON.png"
+                 alt="Logo ASUL Bron"
                  fill
                  className="object-contain"
                  priority
@@ -187,11 +187,11 @@ export function HeaderClerk() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
-            <NavLinks 
-              role={role} 
-              status={status} 
-              isGarminAuthenticated={isGarminAuthenticated} 
+          <nav aria-label="Navigation principale" className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+            <NavLinks
+              role={role}
+              status={status}
+              isGarminAuthenticated={isGarminAuthenticated}
             />
           </nav>
 
@@ -223,12 +223,12 @@ export function HeaderClerk() {
                 pt-[80px] : Laisse la place pour le header fixe (64px + marge) afin de ne pas cacher le logo.
             */}
             <SheetContent side="top" className="w-full pt-[80px] pb-6 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-              
-              <nav className="container mx-auto flex flex-col gap-6"> 
+
+              <nav aria-label="Navigation mobile" className="container mx-auto flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
-                    <NavLinks 
-                      mobile 
-                      onNavigate={() => setIsOpen(false)} 
+                    <NavLinks
+                      mobile
+                      onNavigate={() => setIsOpen(false)}
                       role={role}
                       status={status}
                       isGarminAuthenticated={isGarminAuthenticated}
