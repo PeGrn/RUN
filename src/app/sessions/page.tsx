@@ -64,16 +64,10 @@ export default async function SessionsPage() {
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-3">
               <History className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
-                Historique Global
-              </span>
+              <h1 className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
+                Historique des séances et évènements du groupe
+              </h1>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
-              Historique du Club
-            </h1>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-              Retrouvez toutes les séances d&apos;entraînement et les événements passés
-            </p>
           </div>
         </div>
       </div>

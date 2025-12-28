@@ -30,16 +30,10 @@ export default async function AdminPage() {
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-2 sm:mb-3">
               <Shield className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-primary" />
-              <span className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
-                Administration
-              </span>
+              <h1 className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide">
+                Tableau de bord gestion Admin
+              </h1>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-2 sm:mb-3 md:mb-4">
-              Tableau de bord Admin
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl">
-              Statistiques de l&apos;équipe et gestion des utilisateurs
-            </p>
           </div>
         </div>
       </div>
