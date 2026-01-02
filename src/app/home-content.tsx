@@ -36,6 +36,7 @@ import {
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 import { useAthleteOnboarding } from '@/hooks/use-athlete-onboarding';
 import { SessionActions } from '@/components/training/session-actions';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 
 // --- HELPERS ---
 
@@ -109,6 +110,7 @@ const SessionCard = forwardRef<HTMLDivElement, { session: TrainingSession, userV
   }, [sessionSteps, userVma, session]);
 
   const { distanceDependsOnVma, durationDependsOnVma } = getSessionVmaDependencies(sessionSteps);
+
   const shouldBlurDistance = !userVma && distanceDependsOnVma;
   const shouldBlurDuration = !userVma && durationDependsOnVma;
 
@@ -493,13 +495,15 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base line-clamp-1">{event.title}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 mt-1">
-                              <CalendarDays className="h-3 w-3" />
-                              {format(new Date(event.eventDate), "EEEE d MMMM", { locale: fr })}
-                              {event.startTime && (
-                                <span className="font-medium text-foreground">à {event.startTime}</span>
-                              )}
+                            <CardTitle className="text-base line-clamp-1 break-words">{event.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1 break-words">
+                              <CalendarDays className="h-3 w-3 shrink-0" />
+                              <span className="break-words">
+                                {format(new Date(event.eventDate), "EEEE d MMMM", { locale: fr })}
+                                {event.startTime && (
+                                  <span className="font-medium text-foreground"> à {event.startTime}</span>
+                                )}
+                              </span>
                             </CardDescription>
                           </div>
                           <Badge variant="secondary" className="shrink-0">
@@ -509,7 +513,9 @@ export function HomeContent({ userId, firstName, userVma, userRole, userStatus, 
                       </CardHeader>
                       <CardContent className="pt-0 space-y-3">
                         {event.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                          <div className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
+                            <LinkifiedText text={event.description} />
+                          </div>
                         )}
                         <AddToCalendarButton
                           event={{

@@ -25,6 +25,7 @@ import {
 import { AddToCalendarButton } from '@/components/events/add-to-calendar-button';
 import { VmaDialog } from '@/components/settings/vma-dialog';
 import { SessionActions } from '@/components/training/session-actions';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 
 // --- HELPERS ---
 
@@ -145,16 +146,16 @@ export function SessionDrawer({
                          <CalendarDays className="h-5 w-5 text-blue-600" />}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground">{event.title}</h4>
+                        <h4 className="font-semibold text-foreground break-words">{event.title}</h4>
                         {event.startTime && (
-                          <p className="text-sm font-medium text-orange-600 mt-1">
+                          <p className="text-sm font-medium text-orange-600 mt-1 break-words">
                             {event.startTime}
                           </p>
                         )}
                         {event.description && (
-                          <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                            {event.description}
-                          </p>
+                          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words overflow-hidden">
+                            <LinkifiedText text={event.description} />
+                          </div>
                         )}
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="secondary" className="text-[10px] uppercase">
@@ -203,8 +204,8 @@ export function SessionDrawer({
                         className="w-full p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-left flex items-center justify-between group"
                       >
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{session.name}</h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <h3 className="font-semibold text-lg mb-1 break-words">{session.name}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground break-words">
                             <span className={`flex items-center gap-1 ${shouldBlurDistance ? 'blur-sm select-none' : ''}`}>
                               <Route className="h-4 w-4" />
                               {formatDistance(session.totalDistance)}
@@ -269,7 +270,7 @@ export function SessionDrawer({
             
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <SheetTitle className="text-2xl font-bold text-primary">
+                    <SheetTitle className="text-2xl font-bold text-primary break-words">
                         {session.name}
                     </SheetTitle>
                     <div className="mt-2 text-sm font-medium text-slate-600">
@@ -302,7 +303,7 @@ export function SessionDrawer({
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
             {session.description && (
                 <div className="mb-6 p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <p className="text-sm text-muted-foreground italic">
+                    <p className="text-sm text-muted-foreground italic break-words">
                         &quot;{session.description}&quot;
                     </p>
                 </div>

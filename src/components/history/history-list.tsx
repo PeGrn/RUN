@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker'; // Import nécessaire pour le type
 import type { TrainingSession, Event } from '@prisma/client';
 import { EditEventDialog } from '@/components/events/edit-event-dialog';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 
 type EnrichedSession = TrainingSession & { createdByName?: string };
 type EnrichedEvent = Event & { createdByName?: string };
@@ -360,9 +361,9 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
               return (
                 <Card key={session.id} className="hover:shadow-lg transition-shadow flex flex-col h-full">
                   <CardHeader>
-                    <CardTitle className="text-xl line-clamp-1">{session.name}</CardTitle>
+                    <CardTitle className="text-xl line-clamp-1 break-words">{session.name}</CardTitle>
                     {session.description && (
-                      <CardDescription className="line-clamp-1">{session.description}</CardDescription>
+                      <CardDescription className="line-clamp-1 break-words">{session.description}</CardDescription>
                     )}
                   </CardHeader>
                   <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -444,7 +445,7 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                           {event.type === 'race' ? 'Course' : event.type === 'gathering' ? 'Vie du club' : 'Autre'}
                        </Badge>
                     </div>
-                    <CardTitle className="text-xl line-clamp-1 mt-2">{event.title}</CardTitle>
+                    <CardTitle className="text-xl line-clamp-1 mt-2 break-words">{event.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 flex-1 flex flex-col">
                     <div className="flex-1">
@@ -453,9 +454,9 @@ export function HistoryList({ initialSessions, initialEvents }: HistoryListProps
                         {format(new Date(event.eventDate), 'EEEE d MMMM yyyy', { locale: fr })}
                       </div>
                       {event.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-3 bg-white/50 dark:bg-black/20 p-3 rounded-md">
-                          {event.description}
-                        </p>
+                        <div className="text-sm text-muted-foreground line-clamp-3 bg-white/50 dark:bg-black/20 p-3 rounded-md break-words overflow-hidden">
+                          <LinkifiedText text={event.description} />
+                        </div>
                       )}
                       {event.createdByName && (
                         <div className="mt-3 text-xs text-muted-foreground">
